@@ -1,0 +1,26 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash templates/hooks/context-watchdog.sh \"$TOOL_NAME\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash templates/hooks/session-review-hook.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
