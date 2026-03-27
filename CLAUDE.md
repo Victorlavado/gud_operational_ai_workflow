@@ -5,20 +5,24 @@ This repo contains a generic, living framework for maximizing developer effectiv
 ## Structure
 
 ```
+bin/
+  sync.sh                  # Sync engine (local + remote GitHub fetch)
 templates/
-  common-layer.md        # Universal principles (portable across all projects)
-  project-layer.md       # Project-specific template (domain, architecture, gotchas)
-  hooks/                 # Hook scripts and settings templates for automation
+  common-layer.md          # Universal principles (portable across all projects)
+  project-layer.md         # Project-specific template (domain, architecture, gotchas)
+  hooks/                   # Hook scripts and settings templates for automation
 protocols/
   internal-maintenance.md  # How to update CLAUDE.md from daily work (automated via hooks)
   external-intelligence.md # Sources, filters, processing pipeline, cadences
 knowledge-base/
-  insights/              # Processed insights from external sources
-inbox.md                 # Low-friction URL capture (mobile-friendly)
+  insights/                # Processed insights from external sources
+inbox.md                   # Low-friction URL capture (mobile-friendly)
+install.sh                 # First-time installer (wraps bin/sync.sh)
+VERSION                    # Framework version (bump to trigger auto-update in projects)
 .claude/
-  commands/              # Slash commands
-  skills/                # Skills (loaded on demand)
-  settings.json          # Hook configuration
+  commands/                # Slash commands
+  skills/                  # Skills (loaded on demand)
+  settings.json            # Hook configuration
 ```
 
 ## Principles
