@@ -113,8 +113,9 @@ YOU MUST run these checks before every commit. No exceptions:
 - Si la implementación se complica (tests fallan repetidamente, múltiples cambios de enfoque): parar, hacer `/context-check`, decidir si continuar o `/clear` + reformular.
 
 ### Al final de sesión
-- El hook session-review se ejecuta automáticamente y propone actualizaciones al CLAUDE.md.
+- El hook session-review deja un marker al cerrar. La siguiente sesión detecta el marker y recuerda ejecutar `/session-review`.
 - Si hiciste `/clear` durante la sesión: verifica que los gotchas descubiertos antes del /clear no se perdieron.
+- **Stop hooks son silenciosos**: El stdout de hooks `Stop` no se muestra al usuario (anthropics/claude-code#16227). Para comunicar algo al cierre de sesión, usar estrategia de marker file: Stop escribe archivo → SessionStart lo lee y lo borra.
 
 ### Recuperación de sesiones largas
 Cuando `/clear` es necesario pero no quieres perder contexto, documenta antes:

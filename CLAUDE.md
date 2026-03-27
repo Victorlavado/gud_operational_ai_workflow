@@ -44,6 +44,7 @@ VERSION                    # Framework version (bump to trigger auto-update in p
 - `/session-review` — Review current session for CLAUDE.md updates (also runs automatically via Stop hook)
 - `/recovery` — Diagnose implementation health and recommend recovery actions (also triggered by implementation-health hook)
 - `/context-check` — Evaluate current session context state and recommend actions
+- `/propose-upstream` — Send accumulated upstream proposals (from session-review) to framework repo as GitHub Issues
 
 ## Language
 

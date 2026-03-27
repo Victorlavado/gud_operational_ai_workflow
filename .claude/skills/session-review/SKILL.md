@@ -69,6 +69,43 @@ Para las propuestas aceptadas:
 3. Verifica que el CLAUDE.md no supere las 400 líneas (zona inteligente)
 4. Si supera: sugiere qué mover a archivos referenciados via `@path`
 
+### 6. Clasificar y proponer upstream (reverse sync)
+
+Para cada hallazgo aplicado, evalúa si es **universal** o **project-specific**:
+
+- **Project-specific**: Gotchas de dominio, reglas de negocio, paths, APIs, configuraciones propias del proyecto. → Solo CLAUDE.md del proyecto.
+- **Universal**: Gotchas que aplican a CUALQUIER proyecto usando el framework (ej: "Stop hooks son silenciosos", "notify() necesario para visibilidad"). → CLAUDE.md del proyecto + `.claude/.upstream-proposals`.
+
+#### Criterios para clasificar como universal
+
+Un hallazgo es universal si cumple AL MENOS UNO:
+- Afecta un hook o skill del framework (no código del proyecto)
+- Es un bug o limitación de Claude Code que cualquier usuario encontraría
+- Es un patrón de trabajo que mejora la efectividad independientemente del stack
+- Es una corrección a la documentación del Common Layer
+
+#### Formato de `.upstream-proposals`
+
+Si el hallazgo es universal, append al archivo `.claude/.upstream-proposals` (crear si no existe):
+
+```markdown
+---
+## [Fecha ISO] — [Título corto]
+
+**Tipo**: [gotcha | pattern | anti-pattern | fix]
+**Afecta**: [hook/skill/template name, o "common-layer"]
+**Descripción**: [Qué se descubrió y por qué importa]
+**Cambio sugerido**: [Qué debería cambiar en el framework]
+**Evidencia**: [Qué pasó en la sesión que reveló esto]
+```
+
+Después de añadir una propuesta upstream, notifica al usuario:
+
+```
+UPSTREAM_PROPOSAL: Se detectó un hallazgo universal: "[título]".
+Añadido a .claude/.upstream-proposals. Cuando quieras enviarlas al framework, ejecuta /propose-upstream.
+```
+
 ## Modo automático (invocado por hook)
 
 Cuando se invoca desde el hook Stop:

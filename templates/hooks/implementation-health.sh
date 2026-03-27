@@ -13,6 +13,9 @@
 # Install: Add to .claude/settings.json under hooks.PostToolUse
 # Requires: jq
 
+# Helper: output to both stdout (Claude context) and stderr (user terminal)
+notify() { echo "$1"; echo "$1" >&2; }
+
 # Read JSON from stdin — exit silently on any failure
 INPUT=$(cat 2>/dev/null) || exit 0
 if [ -z "$INPUT" ]; then exit 0; fi
@@ -48,13 +51,13 @@ if [ "$TOOL_NAME" = "Edit" ] || [ "$TOOL_NAME" = "Write" ] || [ "$TOOL_NAME" = "
 
         # Threshold 4: warning (fires once per file)
         if [ "$EDIT_COUNT" -ge 4 ] && [ ! -f "$STATE_DIR/.churn_4_${FILE_HASH}" ]; then
-            echo "IMPLEMENTATION_HEALTH [FILE_CHURN]: ${BASENAME} editado ${EDIT_COUNT} veces en esta sesión. Si son correcciones al mismo problema, el enfoque actual probablemente no funciona. Considera replantear."
+            notify "IMPLEMENTATION_HEALTH [FILE_CHURN]: ${BASENAME} editado ${EDIT_COUNT} veces en esta sesión. Si son correcciones al mismo problema, el enfoque actual probablemente no funciona. Considera replantear."
             touch "$STATE_DIR/.churn_4_${FILE_HASH}"
         fi
 
         # Threshold 7: critical (fires once per file)
         if [ "$EDIT_COUNT" -ge 7 ] && [ ! -f "$STATE_DIR/.churn_7_${FILE_HASH}" ]; then
-            echo "IMPLEMENTATION_HEALTH [FILE_CHURN_CRITICAL]: ${BASENAME} editado ${EDIT_COUNT} veces. Señal clara de espiral. Invoca /recovery para diagnóstico y recomendación de recuperación."
+            notify "IMPLEMENTATION_HEALTH [FILE_CHURN_CRITICAL]: ${BASENAME} editado ${EDIT_COUNT} veces. Señal clara de espiral. Invoca /recovery para diagnóstico y recomendación de recuperación."
             touch "$STATE_DIR/.churn_7_${FILE_HASH}"
         fi
     fi
@@ -73,7 +76,7 @@ if [ "$TOOL_NAME" = "Bash" ]; then
         CMD_COUNT=$(grep -c "^${CMD_HASH}$" "$STATE_DIR/bash.log" 2>/dev/null || echo "0")
         if [ "$CMD_COUNT" -ge 3 ] && [ ! -f "$STATE_DIR/.retry_${CMD_HASH}" ]; then
             SHORT_CMD=$(echo "$COMMAND" | tr '\n' ' ' | head -c 80)
-            echo "IMPLEMENTATION_HEALTH [RETRY_LOOP]: Mismo comando ejecutado ${CMD_COUNT} veces: '${SHORT_CMD}'. Si el resultado no cambia, el problema está en otro sitio."
+            notify "IMPLEMENTATION_HEALTH [RETRY_LOOP]: Mismo comando ejecutado ${CMD_COUNT} veces: '${SHORT_CMD}'. Si el resultado no cambia, el problema está en otro sitio."
             touch "$STATE_DIR/.retry_${CMD_HASH}"
         fi
 
@@ -108,7 +111,7 @@ if [ "$TOOL_NAME" = "Bash" ]; then
                 if [ "$TOTAL_RUNS" -ge 2 ]; then
                     LAST_TWO_FAILS=$(tail -2 "$STATE_DIR/tests.log" | grep -c "1" || echo "0")
                     if [ "$LAST_TWO_FAILS" -ge 2 ] && [ ! -f "$STATE_DIR/.test_regression" ]; then
-                        echo "IMPLEMENTATION_HEALTH [TEST_REGRESSION]: Tests fallando en las últimas ${LAST_TWO_FAILS} ejecuciones consecutivas. Los fixes no están resolviendo el problema."
+                        notify "IMPLEMENTATION_HEALTH [TEST_REGRESSION]: Tests fallando en las últimas ${LAST_TWO_FAILS} ejecuciones consecutivas. Los fixes no están resolviendo el problema."
                         touch "$STATE_DIR/.test_regression"
                     fi
                 fi
@@ -117,7 +120,7 @@ if [ "$TOOL_NAME" = "Bash" ]; then
                 if [ "$TOTAL_RUNS" -ge 3 ]; then
                     LAST_THREE_FAILS=$(tail -3 "$STATE_DIR/tests.log" | grep -c "1" || echo "0")
                     if [ "$LAST_THREE_FAILS" -ge 3 ] && [ ! -f "$STATE_DIR/.test_spiral" ]; then
-                        echo "IMPLEMENTATION_HEALTH [SPIRAL]: 3 ejecuciones de tests consecutivas fallando. Espiral confirmada. Invoca /recovery para diagnóstico completo."
+                        notify "IMPLEMENTATION_HEALTH [SPIRAL]: 3 ejecuciones de tests consecutivas fallando. Espiral confirmada. Invoca /recovery para diagnóstico completo."
                         touch "$STATE_DIR/.test_spiral"
                     fi
                 fi
@@ -133,7 +136,7 @@ if [ -f "$STATE_DIR/edits.log" ] && [ -f "$STATE_DIR/tests.log" ]; then
     TOTAL_TEST_FAILS=$(grep -c "1" "$STATE_DIR/tests.log" 2>/dev/null || echo "0")
 
     if [ "$TOTAL_EDITS" -ge 6 ] && [ "$TOTAL_TEST_FAILS" -ge 3 ] && [ ! -f "$STATE_DIR/.composite_spiral" ]; then
-        echo "IMPLEMENTATION_HEALTH [FIX_TEST_SPIRAL]: ${TOTAL_EDITS} edits + ${TOTAL_TEST_FAILS} test failures. Patrón edit→test→fail confirmado. Invoca /recovery o haz /clear y replantea con scope reducido."
+        notify "IMPLEMENTATION_HEALTH [FIX_TEST_SPIRAL]: ${TOTAL_EDITS} edits + ${TOTAL_TEST_FAILS} test failures. Patrón edit→test→fail confirmado. Invoca /recovery o haz /clear y replantea con scope reducido."
         touch "$STATE_DIR/.composite_spiral"
     fi
 fi

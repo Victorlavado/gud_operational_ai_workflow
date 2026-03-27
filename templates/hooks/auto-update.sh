@@ -1,5 +1,6 @@
 #!/bin/bash
 # Auto-update hook — checks for framework updates on session start.
+# Also checks for pending session review from previous session.
 #
 # Runs at most once per hour per project. If a new version is available,
 # downloads the latest sync script from GitHub and runs it.
@@ -7,8 +8,19 @@
 # State files (in target project, gitignored):
 #   .claude/.framework-version      — installed version
 #   .claude/.last-framework-check   — timestamp of last check
+#   .claude/.pending-session-review — marker from Stop hook
 #
 # Install: Added automatically by bin/sync.sh under hooks.SessionStart
+
+# Helper: output to both stdout (Claude context) and stderr (user terminal)
+notify() { echo "$1"; echo "$1" >&2; }
+
+# ─── Pending session review from previous session ────────────────────────────
+REVIEW_MARKER="$CLAUDE_PROJECT_DIR/.claude/.pending-session-review"
+if [ -f "$REVIEW_MARKER" ]; then
+    notify "SESSION_REVIEW_PENDING: La sesión anterior tuvo cambios significativos que no fueron revisados. Ejecuta /session-review para analizar si hay gotchas o patrones que añadir al CLAUDE.md."
+    rm -f "$REVIEW_MARKER"
+fi
 
 # ─── Cooldown (1 hour) ─────────────────────────────────────────────────────
 COOLDOWN=3600
@@ -40,7 +52,7 @@ fi
 SYNC_SCRIPT=$(curl -sfL --max-time 10 "$GITHUB_RAW/bin/sync.sh" 2>/dev/null || echo "")
 
 if [ -z "$SYNC_SCRIPT" ]; then
-    echo "FRAMEWORK_UPDATE: nueva versión disponible ($LOCAL_VERSION → $REMOTE_VERSION) pero no se pudo descargar el sync. Se reintentará en la próxima sesión."
+    notify "FRAMEWORK_UPDATE: nueva versión disponible ($LOCAL_VERSION → $REMOTE_VERSION) pero no se pudo descargar el sync. Se reintentará en la próxima sesión."
     exit 0
 fi
 

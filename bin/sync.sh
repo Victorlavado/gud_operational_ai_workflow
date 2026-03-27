@@ -86,6 +86,7 @@ sync_file() {
 mkdir -p "$TARGET_DIR/.claude/hooks"
 mkdir -p "$TARGET_DIR/.claude/skills/session-review"
 mkdir -p "$TARGET_DIR/.claude/skills/recovery"
+mkdir -p "$TARGET_DIR/.claude/skills/propose-upstream"
 mkdir -p "$TARGET_DIR/.claude/commands"
 
 # 2. Sync hooks
@@ -95,7 +96,7 @@ for hook in context-watchdog.sh implementation-health.sh session-review-hook.sh 
 done
 
 # 3. Sync skills
-for skill_dir in session-review recovery; do
+for skill_dir in session-review recovery propose-upstream; do
     sync_file ".claude/skills/$skill_dir/SKILL.md" \
               "$TARGET_DIR/.claude/skills/$skill_dir/SKILL.md" \
               "skill: $skill_dir"
@@ -162,7 +163,7 @@ fi
 
 # 7. Add tracking files to .gitignore
 if [ -f "$TARGET_DIR/.gitignore" ]; then
-    for entry in ".claude/.framework-version" ".claude/.last-framework-check"; do
+    for entry in ".claude/.framework-version" ".claude/.last-framework-check" ".claude/.pending-session-review" ".claude/.upstream-proposals"; do
         if ! grep -qF "$entry" "$TARGET_DIR/.gitignore" 2>/dev/null; then
             echo "$entry" >> "$TARGET_DIR/.gitignore"
             log_change ".gitignore (añadido $entry)"
