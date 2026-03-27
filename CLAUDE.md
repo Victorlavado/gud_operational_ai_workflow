@@ -38,6 +38,8 @@ inbox.md                 # Low-friction URL capture (mobile-friendly)
 - `/process-resource <url>` — Process a single URL into an actionable insight
 - `/process-inbox` — Batch-process all pending URLs from inbox.md
 - `/session-review` — Review current session for CLAUDE.md updates (also runs automatically via Stop hook)
+- `/recovery` — Diagnose implementation health and recommend recovery actions (also triggered by implementation-health hook)
+- `/context-check` — Evaluate current session context state and recommend actions
 
 ## Language
 

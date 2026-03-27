@@ -6,7 +6,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/context-watchdog.sh \"$TOOL_NAME\""
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/context-watchdog.sh\" \"$TOOL_NAME\""
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/implementation-health.sh\""
           }
         ]
       }
@@ -17,7 +21,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/session-review-hook.sh"
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/session-review-hook.sh\""
           }
         ]
       }

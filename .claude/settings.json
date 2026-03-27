@@ -6,7 +6,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash templates/hooks/context-watchdog.sh \"$TOOL_NAME\""
+            "command": "bash \"$CLAUDE_PROJECT_DIR/templates/hooks/context-watchdog.sh\" \"$TOOL_NAME\""
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/templates/hooks/implementation-health.sh\""
           }
         ]
       }
@@ -17,7 +21,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash templates/hooks/session-review-hook.sh"
+            "command": "bash \"$CLAUDE_PROJECT_DIR/templates/hooks/session-review-hook.sh\""
           }
         ]
       }

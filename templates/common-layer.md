@@ -35,9 +35,10 @@ Si observas CUALQUIERA de estas señales, el contexto está degradado:
 
 **Protocolo ante degradación:**
 1. NO sigas trabajando — cada interacción adicional empeora la situación
-2. Documenta el estado actual: qué se hizo, qué falta, decisiones tomadas, gotchas descubiertos
-3. Haz commit de los cambios que funcionen
-4. `/clear` y retoma con un prompt de reanudación que incluya el contexto documentado
+2. Invoca `/recovery` para diagnóstico automático basado en señales objetivas y recomendación de acción
+3. Si `/recovery` no está disponible: documenta estado, commit WIP, `/clear` + prompt de reanudación
+
+El **hook implementation-health** detecta automáticamente patrones de espiral (file churn, test regression, retry loops) y recomienda invocar `/recovery` cuando las señales lo justifican.
 
 ## Work Patterns
 

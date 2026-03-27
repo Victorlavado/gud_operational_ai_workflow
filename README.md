@@ -60,7 +60,11 @@ CLAUDE.md = Common Layer + Project Layer
 | Mecanismo | Cuándo | Qué hace |
 |-----------|--------|----------|
 | Hook Stop | Al terminar cada sesión | Revisa si hay gotchas/patrones nuevos → propone CLAUDE.md updates |
-| `/session-review` | Bajo demanda | Análisis completo de la sesión actual |
+| Hook context-watchdog | Cada tool call | Cuenta tool calls y alerta en umbrales de degradación (30/50/80) |
+| Hook implementation-health | Cada Edit/Bash | Detecta file churn, retry loops, test regression → recomienda `/recovery` |
+| `/recovery` | Auto (por hook) o bajo demanda | Diagnóstico objetivo de la sesión + recomendación de recuperación + prompt de reanudación |
+| `/context-check` | Bajo demanda | Diagnóstico del estado del contexto |
+| `/session-review` | Bajo demanda / auto (Stop) | Análisis completo de la sesión actual |
 | `/bootstrap-intelligence` | Al integrar proyecto existente | Escanea historial y código → pre-rellena CLAUDE.md |
 | `/process-inbox` | Cuando te sientes a trabajar | Procesa URLs capturadas desde móvil |
 | `/weekly-briefing` | Semanal | Scan de ecosystem + búsqueda abierta |

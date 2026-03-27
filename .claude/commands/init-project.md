@@ -63,14 +63,17 @@ Copia los hooks del framework al proyecto target:
 1. Crea `.claude/hooks/` en el directorio target si no existe
 2. Copia `templates/hooks/session-review-hook.sh` a `.claude/hooks/session-review-hook.sh`
 3. Copia `templates/hooks/context-watchdog.sh` a `.claude/hooks/context-watchdog.sh`
-4. Hazlos ejecutables (`chmod +x`)
-5. Si existe `.claude/settings.json`: haz merge de la configuración de hooks (no sobrescribir)
-6. Si no existe: copia `templates/hooks/settings.json.template` como `.claude/settings.json`
+4. Copia `templates/hooks/implementation-health.sh` a `.claude/hooks/implementation-health.sh`
+5. Hazlos ejecutables (`chmod +x`)
+6. Si existe `.claude/settings.json`: haz merge de la configuración de hooks (no sobrescribir)
+7. Si no existe: copia `templates/hooks/settings.json.template` como `.claude/settings.json`
 
 También copia skills y commands del framework:
 1. Crea `.claude/skills/session-review/` en el directorio target
 2. Copia `.claude/skills/session-review/SKILL.md`
-3. Copia `.claude/commands/context-check.md` a `.claude/commands/context-check.md`
+3. Crea `.claude/skills/recovery/` en el directorio target
+4. Copia `.claude/skills/recovery/SKILL.md`
+5. Copia `.claude/commands/context-check.md` a `.claude/commands/context-check.md`
 
 ### 6. Escribir el archivo
 
