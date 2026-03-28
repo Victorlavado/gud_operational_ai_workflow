@@ -26,22 +26,27 @@ try:
     d = json.load(sys.stdin)
     m = d.get('model', {})
     ctx = d.get('context_window', {})
+    import os
+    cwd = d.get('cwd', '')
+    dirname = os.path.basename(cwd) if cwd else '?'
     fields = [
         m.get('display_name', m.get('id', '?')),
         str(int(ctx.get('used_percentage', 0) or 0)),
         d.get('session_id', ''),
-        str(ctx.get('context_window_size', 200000))
+        str(ctx.get('context_window_size', 200000)),
+        dirname
     ]
     sys.stdout.write('\x1e'.join(fields))
 except:
-    sys.stdout.write('\x1e'.join(['?','0','','200000']))
+    sys.stdout.write('\x1e'.join(['?','0','','200000','?']))
 " 2>/dev/null) || exit 0
 
 RS=$'\x1e'
 MODEL="${PARSED%%${RS}*}"; PARSED="${PARSED#*${RS}}"
 PCT="${PARSED%%${RS}*}"; PARSED="${PARSED#*${RS}}"
 SESSION_ID="${PARSED%%${RS}*}"; PARSED="${PARSED#*${RS}}"
-MAX_CTX="$PARSED"
+MAX_CTX="${PARSED%%${RS}*}"; PARSED="${PARSED#*${RS}}"
+DIR_NAME="$PARSED"
 
 # Write real context percentage to shared state file (read by context-watchdog hook)
 if [ -n "$SESSION_ID" ] && [ -n "$PCT" ]; then
@@ -88,8 +93,8 @@ else
     MAX_DISPLAY="${MAX_K}k"
 fi
 
-# Line 1: Model | Context bar
-printf '%b\n' "${C_DIM}${MODEL}${C_RESET} ${bar} ${C_DIM}${PCT}% of ${MAX_DISPLAY}${C_RESET}"
+# Line 1: Dir | Model | Context bar
+printf '%b\n' "${C_DIM}${DIR_NAME} | ${MODEL}${C_RESET} ${bar} ${C_DIM}${PCT}% of ${MAX_DISPLAY}${C_RESET}"
 
 # Line 2: Hook alert (if recent)
 ALERT_FILE="/tmp/claude-hooks-alert-${SESSION_ID}"
