@@ -8,6 +8,12 @@ Thumbs.db
 # Temp files from context watchdog
 /tmp/claude-context-*
 
+# Framework runtime state (transient, not portable)
+.claude/.framework-version
+.claude/.last-framework-check
+.claude/.pending-session-review
+.claude/.upstream-proposals
+
 # Editor
 *.swp
 *.swo
