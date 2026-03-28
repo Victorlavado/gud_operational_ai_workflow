@@ -14,11 +14,17 @@
 # Install: Add to .claude/settings.json under hooks.PostToolUse
 # The hook receives tool name as argument
 
-# Helper: emit alert to stderr (user terminal) + structured JSON to stdout (Claude context)
-# PostToolUse hooks require additionalContext JSON for Claude to see the output.
+# Helper: emit alert via all available channels
+# - Status line file: user sees in terminal status bar (via statusline.sh)
+# - stderr: fallback (currently captured by Claude Code, kept for forward-compat)
+# - stdout JSON (at end of script): Claude sees via additionalContext
 ALERT_MSG=""
 alert() {
     local msg="$1"
+    # Write to status line alert file (session-scoped)
+    if [ -n "$SESSION_ID" ]; then
+        echo "$msg" > "/tmp/claude-hooks-alert-${SESSION_ID}" 2>/dev/null
+    fi
     echo "$msg" >&2
     ALERT_MSG="$msg"
 }

@@ -13,10 +13,17 @@
 # Install: Add to .claude/settings.json under hooks.PostToolUse
 # Requires: python3 (for JSON parsing; available on virtually all dev environments)
 
-# Collect alerts — emitted as structured JSON at the end
+# Collect alerts — emitted via all available channels
+# - Status line file: user sees in terminal status bar (via statusline.sh)
+# - stderr: fallback (currently captured by Claude Code, kept for forward-compat)
+# - stdout JSON (at end of script): Claude sees via additionalContext
 ALERTS=""
 alert() {
     local msg="$1"
+    # Write to status line alert file (session-scoped, last alert wins)
+    if [ -n "$SESSION_ID" ]; then
+        echo "$msg" > "/tmp/claude-hooks-alert-${SESSION_ID}" 2>/dev/null
+    fi
     echo "$msg" >&2
     ALERTS="${ALERTS:+$ALERTS | }$msg"
 }
