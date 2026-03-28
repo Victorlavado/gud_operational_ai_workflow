@@ -25,11 +25,18 @@ alert() {
 
 TOOL_NAME="${1:-unknown}"
 
-# Session tracking via temp file (unique per terminal session)
-SESSION_FILE="/tmp/claude-context-$$"
+# Extract session_id from PostToolUse JSON stdin (unique per Claude Code session)
+SESSION_ID=""
+INPUT=$(cat 2>/dev/null)
+if [ -n "$INPUT" ] && command -v python3 &>/dev/null; then
+    SESSION_ID=$(echo "$INPUT" | python3 -c "import sys,json;print(json.load(sys.stdin).get('session_id',''),end='')" 2>/dev/null)
+fi
 
-# If parent PID-based tracking doesn't work, fallback to PWD-based
-if [ ! -f "$SESSION_FILE" ]; then
+# Session tracking via temp file — scoped to session_id, not PWD
+if [ -n "$SESSION_ID" ]; then
+    SESSION_FILE="/tmp/claude-context-${SESSION_ID}"
+else
+    # Fallback: PWD-based (only if stdin parsing fails)
     SESSION_FILE="/tmp/claude-context-$(echo "$PWD" | md5sum | cut -c1-8)"
 fi
 
