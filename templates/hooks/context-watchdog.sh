@@ -1,15 +1,19 @@
 #!/bin/bash
-# Context Watchdog — tracks interaction count per session and warns at degradation thresholds.
+# Context Watchdog — monitors real context usage and warns at degradation thresholds.
 #
 # How it works:
-# - Uses a temp file (/tmp/claude-context-<session-id>) to count PostToolUse events per session
-# - Each tool call increments the counter
-# - At defined thresholds, outputs warnings that Claude sees as feedback
+# - Reads actual used_percentage from /tmp/claude-context-pct-<session_id>
+#   (written by statusline.sh, which gets real token data from Claude Code)
+# - Alerts Claude via additionalContext JSON when thresholds are crossed
+# - Maintains a tool call counter as diagnostic data (no alerts based on it)
 #
-# Thresholds (based on Latent Patterns research: smart zone ~40% utilization):
-# - 30 tool calls: YELLOW — approaching smart zone boundary
-# - 50 tool calls: ORANGE — likely beyond smart zone, consider /compact
-# - 80 tool calls: RED — high degradation risk, /clear recommended
+# Thresholds (based on convergent research — RULER, MECW, Anthropic, Latent Patterns):
+# - 40%: YELLOW — approaching effective boundary of context window
+# - 65%: ORANGE — beyond effective zone, compaction recommended
+# - 80%: RED — near auto-compaction (83.5%), fresh session recommended
+#
+# These thresholds are percentage-based, so they work correctly across all models
+# regardless of context window size (200k Haiku, 1M Sonnet/Opus).
 #
 # Install: Add to .claude/settings.json under hooks.PostToolUse
 # The hook receives tool name as argument
@@ -38,33 +42,47 @@ if [ -n "$INPUT" ] && command -v python3 &>/dev/null; then
     SESSION_ID=$(echo "$INPUT" | python3 -c "import sys,json;print(json.load(sys.stdin).get('session_id',''),end='')" 2>/dev/null)
 fi
 
-# Session tracking via temp file — scoped to session_id, not PWD
-if [ -n "$SESSION_ID" ]; then
-    SESSION_FILE="/tmp/claude-context-${SESSION_ID}"
-else
-    # Fallback: PWD-based (only if stdin parsing fails)
-    SESSION_FILE="/tmp/claude-context-$(echo "$PWD" | md5sum | cut -c1-8)"
+# Session ID fallback
+if [ -z "$SESSION_ID" ]; then
+    SESSION_ID=$(echo "$PWD" | md5sum | cut -c1-8)
 fi
 
-# Initialize counter if first call
-if [ ! -f "$SESSION_FILE" ]; then
-    echo "0" > "$SESSION_FILE"
+# ─── TOOL CALL COUNTER (diagnostic, no alerts) ────────────────────────────
+COUNTER_FILE="/tmp/claude-context-calls-${SESSION_ID}"
+if [ ! -f "$COUNTER_FILE" ]; then
+    echo "0" > "$COUNTER_FILE"
 fi
-
-# Increment counter
-COUNT=$(cat "$SESSION_FILE")
+COUNT=$(cat "$COUNTER_FILE" 2>/dev/null || echo "0")
 COUNT=$((COUNT + 1))
-echo "$COUNT" > "$SESSION_FILE"
+echo "$COUNT" > "$COUNTER_FILE"
 
-# Check thresholds and output warnings
-if [ "$COUNT" -eq 30 ]; then
-    alert "CONTEXT_WATCHDOG [YELLOW]: 30 tool calls en esta sesión. Te acercas al límite de la zona inteligente (~40% del contexto). Si la tarea actual es compleja, considera usar /compact para preservar el contexto esencial, o finaliza la tarea actual antes de empezar otra."
-elif [ "$COUNT" -eq 50 ]; then
-    alert "CONTEXT_WATCHDOG [ORANGE]: 50 tool calls. Probablemente estás más allá de la zona inteligente. Señales a vigilar: Claude olvida decisiones previas, repite errores corregidos, o ignora instrucciones del CLAUDE.md. Recomendación: /compact con instrucciones de qué preservar, o /clear + reformular con lo aprendido en esta sesión."
-elif [ "$COUNT" -eq 80 ]; then
-    alert "CONTEXT_WATCHDOG [RED]: 80 tool calls. Alto riesgo de degradación. La compactación automática puede haber eliminado contexto crítico. RECOMENDACIÓN: /clear y empezar sesión fresca. Antes de /clear: documenta el estado actual (qué se hizo, qué queda, decisiones tomadas) para poder retomar sin fricción."
-elif [ "$((COUNT % 20))" -eq 0 ] && [ "$COUNT" -gt 80 ]; then
-    alert "CONTEXT_WATCHDOG [RED]: $COUNT tool calls. Sesión muy larga. Calidad de output probablemente degradada. Usa /clear."
+# ─── CONTEXT PERCENTAGE MONITORING (real data from statusline.sh) ──────────
+PCT_FILE="/tmp/claude-context-pct-${SESSION_ID}"
+ALERT_STATE="/tmp/claude-context-alert-state-${SESSION_ID}"
+
+# Read real context percentage (written by statusline.sh after each Claude response)
+PCT=0
+if [ -f "$PCT_FILE" ]; then
+    PCT=$(cat "$PCT_FILE" 2>/dev/null || echo "0")
+    # Sanitize: ensure it's a number
+    case "$PCT" in
+        ''|*[!0-9]*) PCT=0 ;;
+    esac
+fi
+
+# Read last alert level to avoid repeating (fires once per threshold crossing)
+LAST_ALERT=$(cat "$ALERT_STATE" 2>/dev/null || echo "none")
+
+# Check thresholds — each fires once, escalating
+if [ "$PCT" -ge 80 ] && [ "$LAST_ALERT" != "red" ]; then
+    alert "CONTEXT_WATCHDOG [RED]: ${PCT}% del contexto consumido. Cerca del auto-compaction (83.5%). La compactación automática puede eliminar contexto crítico. RECOMENDACIÓN: /clear y empezar sesión fresca. Antes de /clear: documenta el estado actual (qué se hizo, qué queda, decisiones tomadas)."
+    echo "red" > "$ALERT_STATE" 2>/dev/null
+elif [ "$PCT" -ge 65 ] && [ "$LAST_ALERT" != "orange" ] && [ "$LAST_ALERT" != "red" ]; then
+    alert "CONTEXT_WATCHDOG [ORANGE]: ${PCT}% del contexto consumido. Más allá de la zona efectiva del modelo. Señales a vigilar: olvido de decisiones previas, errores repetidos, ignorar CLAUDE.md. Recomendación: /compact con instrucciones de qué preservar."
+    echo "orange" > "$ALERT_STATE" 2>/dev/null
+elif [ "$PCT" -ge 40 ] && [ "$LAST_ALERT" != "yellow" ] && [ "$LAST_ALERT" != "orange" ] && [ "$LAST_ALERT" != "red" ]; then
+    alert "CONTEXT_WATCHDOG [YELLOW]: ${PCT}% del contexto consumido. Te acercas al límite de la zona efectiva. Si la tarea actual es compleja, considera /compact. No empieces tareas nuevas — mantén el foco en la línea actual."
+    echo "yellow" > "$ALERT_STATE" 2>/dev/null
 fi
 
 # Emit structured JSON so Claude sees the alert via additionalContext

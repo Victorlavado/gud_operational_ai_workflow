@@ -62,7 +62,7 @@ Si prefieres control explícito o no tienes internet:
 |-----------|--------|---------|
 | Hooks | `templates/hooks/*.sh` | `.claude/hooks/` |
 | Skills | `.claude/skills/*/SKILL.md` | `.claude/skills/` |
-| Commands | `.claude/commands/context-check.md` | `.claude/commands/` |
+| Commands | `.claude/commands/*.md` | `.claude/commands/` |
 | Settings | `templates/hooks/settings.json.template` | `.claude/settings.json` (merge) |
 | Common Layer | `templates/common-layer.md` | Sección marcada en `CLAUDE.md` |
 | Versión | `VERSION` | `.claude/.framework-version` |
@@ -119,8 +119,9 @@ CLAUDE.md = Common Layer + Project Layer
 |-----------|--------|----------|
 | Hook auto-update | Al iniciar sesión | Comprueba nueva versión del framework → sincroniza automáticamente |
 | Hook Stop | Al terminar cada sesión | Revisa si hay gotchas/patrones nuevos → propone CLAUDE.md updates |
-| Hook context-watchdog | Cada tool call | Cuenta tool calls y alerta en umbrales de degradación (30/50/80) |
+| Hook context-watchdog | Cada tool call | Lee % real de contexto consumido y alerta en umbrales de degradación (40%/65%/80%) |
 | Hook implementation-health | Cada Edit/Bash | Detecta file churn, retry loops, test regression → recomienda `/recovery` |
+| Status line | Cada respuesta de Claude | Muestra barra de contexto + alertas de hooks en la terminal del usuario |
 | `/recovery` | Auto (por hook) o bajo demanda | Diagnóstico objetivo de la sesión + recomendación de recuperación + prompt de reanudación |
 | `/context-check` | Bajo demanda | Diagnóstico del estado del contexto |
 | `/session-review` | Bajo demanda / auto (Stop) | Análisis completo de la sesión actual |
@@ -136,7 +137,7 @@ bin/
 templates/
   common-layer.md          # Universal principles (portable across all projects)
   project-layer.md         # Project-specific template (domain, architecture, gotchas)
-  hooks/                   # Hook scripts and settings templates
+  hooks/                   # Hook scripts, status line, and settings templates
 protocols/
   internal-maintenance.md  # How to update CLAUDE.md from daily work
   external-intelligence.md # Sources, filters, processing pipeline, cadences

@@ -1,11 +1,19 @@
 #!/bin/bash
 # Status line — displays context usage and hook alerts in the Claude Code terminal.
 #
-# Shows real-time alerts from context-watchdog and implementation-health hooks
-# directly in the status bar, giving the user visibility without a second terminal.
+# Dual role:
+# 1. Visual: shows context bar + hook alerts to the user
+# 2. Data bridge: writes used_percentage to /tmp/claude-context-pct-<session_id>
+#    so PostToolUse hooks (context-watchdog) can use real % instead of tool call proxies
 #
 # Hooks write alerts to /tmp/claude-hooks-alert-<session_id>.
 # This script reads that file and displays the latest alert with color coding.
+#
+# Context degradation thresholds (based on convergent research):
+#   GREEN  <40%  — within Anthropic's recommended optimal zone
+#   YELLOW  40%  — approaching effective boundary (RULER/MECW research: 60-70%)
+#   ORANGE  65%  — beyond effective zone, compaction recommended
+#   RED     80%  — near auto-compaction (83.5%), fresh session recommended
 #
 # Install: Add statusLine to .claude/settings.json (see settings.json.template)
 
@@ -35,6 +43,11 @@ PCT="${PARSED%%${RS}*}"; PARSED="${PARSED#*${RS}}"
 SESSION_ID="${PARSED%%${RS}*}"; PARSED="${PARSED#*${RS}}"
 MAX_CTX="$PARSED"
 
+# Write real context percentage to shared state file (read by context-watchdog hook)
+if [ -n "$SESSION_ID" ] && [ -n "$PCT" ]; then
+    echo "$PCT" > "/tmp/claude-context-pct-${SESSION_ID}" 2>/dev/null
+fi
+
 # Colors
 C_RESET='\033[0m'
 C_DIM='\033[38;5;245m'
@@ -50,12 +63,12 @@ for ((i=0; i<10; i++)); do
     threshold=$((i * 10))
     progress=$((PCT - threshold))
     if [ "$progress" -ge 8 ]; then
-        # Color block based on overall percentage
+        # Color block based on degradation thresholds
         if [ "$PCT" -lt 40 ]; then
             bar+="${C_GREEN}█${C_RESET}"
         elif [ "$PCT" -lt 65 ]; then
             bar+="${C_YELLOW}█${C_RESET}"
-        elif [ "$PCT" -lt 85 ]; then
+        elif [ "$PCT" -lt 80 ]; then
             bar+="${C_ORANGE}█${C_RESET}"
         else
             bar+="${C_RED}█${C_RESET}"
