@@ -22,10 +22,10 @@ echo "Framework: $FRAMEWORK_DIR"
 echo "Target:    $TARGET_DIR"
 echo ""
 
-# Check jq dependency
-if ! command -v jq &>/dev/null; then
-    echo "AVISO: jq no está instalado. El hook implementation-health requiere jq."
-    echo "Instala con: sudo apt-get install jq (Debian/Ubuntu) o brew install jq (macOS)"
+# Check python3 dependency
+if ! command -v python3 &>/dev/null; then
+    echo "AVISO: python3 no está instalado. El hook implementation-health requiere python3."
+    echo "Instala con: sudo apt-get install python3 (Debian/Ubuntu) o brew install python3 (macOS)"
     echo ""
 fi
 

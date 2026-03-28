@@ -11,27 +11,54 @@
 # Works alongside context-watchdog.sh (separate concerns).
 #
 # Install: Add to .claude/settings.json under hooks.PostToolUse
-# Requires: jq
+# Requires: python3 (for JSON parsing; available on virtually all dev environments)
 
-# Helper: output to both stdout (Claude context) and stderr (user terminal)
-notify() { echo "$1"; echo "$1" >&2; }
+# Collect alerts — emitted as structured JSON at the end
+ALERTS=""
+alert() {
+    local msg="$1"
+    echo "$msg" >&2
+    ALERTS="${ALERTS:+$ALERTS | }$msg"
+}
 
 # Read JSON from stdin — exit silently on any failure
 INPUT=$(cat 2>/dev/null) || exit 0
 if [ -z "$INPUT" ]; then exit 0; fi
 
-# Require jq
-command -v jq &>/dev/null || exit 0
+# Require python3 for JSON parsing (replaces jq dependency)
+command -v python3 &>/dev/null || exit 0
 
-# Quick parse: tool name (fast path for irrelevant tools)
-TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // "unknown"' 2>/dev/null) || exit 0
+# Parse all needed fields in a single python3 call (RS-delimited to handle multiline values)
+# Uses ASCII Record Separator (0x1E) as delimiter — safe with any text content
+PARSED=$(echo "$INPUT" | python3 -c "
+import sys, json
+try:
+    d = json.load(sys.stdin)
+    ti = d.get('tool_input', {}) if isinstance(d.get('tool_input'), dict) else {}
+    tr = d.get('tool_response', '')
+    if not isinstance(tr, str):
+        tr = str(tr)
+    fields = [d.get('tool_name','unknown'), d.get('session_id',''), ti.get('file_path',''), ti.get('command',''), tr[:5000]]
+    sys.stdout.write('\x1e'.join(fields))
+except:
+    sys.stdout.write('\x1e'.join(['unknown','','','','']))
+" 2>/dev/null) || exit 0
+
+# Split RS-delimited fields using parameter expansion (handles newlines in values)
+RS=$'\x1e'
+TOOL_NAME="${PARSED%%${RS}*}"; PARSED="${PARSED#*${RS}}"
+SESSION_ID="${PARSED%%${RS}*}"; PARSED="${PARSED#*${RS}}"
+FILE_PATH="${PARSED%%${RS}*}"; PARSED="${PARSED#*${RS}}"
+COMMAND="${PARSED%%${RS}*}"; PARSED="${PARSED#*${RS}}"
+RESPONSE="$PARSED"
+
+# Fast path: only process relevant tools
 case "$TOOL_NAME" in
     Edit|Write|MultiEdit|Bash) ;; # Continue processing
     *) exit 0 ;; # Not relevant — exit fast
 esac
 
-# Parse session ID for state tracking
-SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty' 2>/dev/null)
+# Session ID fallback
 if [ -z "$SESSION_ID" ]; then
     SESSION_ID=$(echo "$PWD" | md5sum | cut -c1-12)
 fi
@@ -41,7 +68,6 @@ mkdir -p "$STATE_DIR" 2>/dev/null || exit 0
 
 # ─── FILE CHURN DETECTION ───────────────────────────────────────────────────
 if [ "$TOOL_NAME" = "Edit" ] || [ "$TOOL_NAME" = "Write" ] || [ "$TOOL_NAME" = "MultiEdit" ]; then
-    FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty' 2>/dev/null)
     if [ -n "$FILE_PATH" ]; then
         echo "$FILE_PATH" >> "$STATE_DIR/edits.log"
 
@@ -51,13 +77,13 @@ if [ "$TOOL_NAME" = "Edit" ] || [ "$TOOL_NAME" = "Write" ] || [ "$TOOL_NAME" = "
 
         # Threshold 4: warning (fires once per file)
         if [ "$EDIT_COUNT" -ge 4 ] && [ ! -f "$STATE_DIR/.churn_4_${FILE_HASH}" ]; then
-            notify "IMPLEMENTATION_HEALTH [FILE_CHURN]: ${BASENAME} editado ${EDIT_COUNT} veces en esta sesión. Si son correcciones al mismo problema, el enfoque actual probablemente no funciona. Considera replantear."
+            alert "IMPLEMENTATION_HEALTH [FILE_CHURN]: ${BASENAME} editado ${EDIT_COUNT} veces en esta sesión. Si son correcciones al mismo problema, el enfoque actual probablemente no funciona. Considera replantear."
             touch "$STATE_DIR/.churn_4_${FILE_HASH}"
         fi
 
         # Threshold 7: critical (fires once per file)
         if [ "$EDIT_COUNT" -ge 7 ] && [ ! -f "$STATE_DIR/.churn_7_${FILE_HASH}" ]; then
-            notify "IMPLEMENTATION_HEALTH [FILE_CHURN_CRITICAL]: ${BASENAME} editado ${EDIT_COUNT} veces. Señal clara de espiral. Invoca /recovery para diagnóstico y recomendación de recuperación."
+            alert "IMPLEMENTATION_HEALTH [FILE_CHURN_CRITICAL]: ${BASENAME} editado ${EDIT_COUNT} veces. Señal clara de espiral. Invoca /recovery para diagnóstico y recomendación de recuperación."
             touch "$STATE_DIR/.churn_7_${FILE_HASH}"
         fi
     fi
@@ -65,8 +91,6 @@ fi
 
 # ─── BASH COMMAND TRACKING ──────────────────────────────────────────────────
 if [ "$TOOL_NAME" = "Bash" ]; then
-    COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null)
-
     if [ -n "$COMMAND" ]; then
         # Normalize and hash for deduplication
         CMD_HASH=$(echo "$COMMAND" | tr -s '[:space:]' ' ' | md5sum | cut -c1-16)
@@ -76,7 +100,7 @@ if [ "$TOOL_NAME" = "Bash" ]; then
         CMD_COUNT=$(grep -c "^${CMD_HASH}$" "$STATE_DIR/bash.log" 2>/dev/null || echo "0")
         if [ "$CMD_COUNT" -ge 3 ] && [ ! -f "$STATE_DIR/.retry_${CMD_HASH}" ]; then
             SHORT_CMD=$(echo "$COMMAND" | tr '\n' ' ' | head -c 80)
-            notify "IMPLEMENTATION_HEALTH [RETRY_LOOP]: Mismo comando ejecutado ${CMD_COUNT} veces: '${SHORT_CMD}'. Si el resultado no cambia, el problema está en otro sitio."
+            alert "IMPLEMENTATION_HEALTH [RETRY_LOOP]: Mismo comando ejecutado ${CMD_COUNT} veces: '${SHORT_CMD}'. Si el resultado no cambia, el problema está en otro sitio."
             touch "$STATE_DIR/.retry_${CMD_HASH}"
         fi
 
@@ -90,12 +114,6 @@ if [ "$TOOL_NAME" = "Bash" ]; then
         esac
 
         if [ "$IS_TEST" = true ]; then
-            # Extract response (truncated) to check for failure patterns
-            RESPONSE=$(echo "$INPUT" | jq -r '
-                if .tool_response | type == "string" then .tool_response
-                else (.tool_response | tostring)
-                end' 2>/dev/null | head -c 5000)
-
             HAS_FAILURE=0
             if echo "$RESPONSE" | grep -qiE '(FAIL|FAILED|FAILURE|ERROR|AssertionError|expected.*received|expected.*but got|test(s)? failed)'; then
                 HAS_FAILURE=1
@@ -103,24 +121,24 @@ if [ "$TOOL_NAME" = "Bash" ]; then
 
             echo "$HAS_FAILURE" >> "$STATE_DIR/tests.log"
 
-            # Check trajectory over last 3 runs
+            # Check trajectory over last runs
             if [ -f "$STATE_DIR/tests.log" ]; then
-                TOTAL_RUNS=$(wc -l < "$STATE_DIR/tests.log")
+                TOTAL_RUNS=$(wc -l < "$STATE_DIR/tests.log" | tr -d '[:space:]')
 
                 # 2+ consecutive failures: regression warning (fires once)
                 if [ "$TOTAL_RUNS" -ge 2 ]; then
-                    LAST_TWO_FAILS=$(tail -2 "$STATE_DIR/tests.log" | grep -c "1" || echo "0")
+                    LAST_TWO_FAILS=$(tail -2 "$STATE_DIR/tests.log" | grep -c "1" | tr -d '[:space:]')
                     if [ "$LAST_TWO_FAILS" -ge 2 ] && [ ! -f "$STATE_DIR/.test_regression" ]; then
-                        notify "IMPLEMENTATION_HEALTH [TEST_REGRESSION]: Tests fallando en las últimas ${LAST_TWO_FAILS} ejecuciones consecutivas. Los fixes no están resolviendo el problema."
+                        alert "IMPLEMENTATION_HEALTH [TEST_REGRESSION]: Tests fallando en las últimas ${LAST_TWO_FAILS} ejecuciones consecutivas. Los fixes no están resolviendo el problema."
                         touch "$STATE_DIR/.test_regression"
                     fi
                 fi
 
                 # 3+ consecutive failures: spiral confirmed (fires once)
                 if [ "$TOTAL_RUNS" -ge 3 ]; then
-                    LAST_THREE_FAILS=$(tail -3 "$STATE_DIR/tests.log" | grep -c "1" || echo "0")
+                    LAST_THREE_FAILS=$(tail -3 "$STATE_DIR/tests.log" | grep -c "1" | tr -d '[:space:]')
                     if [ "$LAST_THREE_FAILS" -ge 3 ] && [ ! -f "$STATE_DIR/.test_spiral" ]; then
-                        notify "IMPLEMENTATION_HEALTH [SPIRAL]: 3 ejecuciones de tests consecutivas fallando. Espiral confirmada. Invoca /recovery para diagnóstico completo."
+                        alert "IMPLEMENTATION_HEALTH [SPIRAL]: 3 ejecuciones de tests consecutivas fallando. Espiral confirmada. Invoca /recovery para diagnóstico completo."
                         touch "$STATE_DIR/.test_spiral"
                     fi
                 fi
@@ -136,9 +154,15 @@ if [ -f "$STATE_DIR/edits.log" ] && [ -f "$STATE_DIR/tests.log" ]; then
     TOTAL_TEST_FAILS=$(grep -c "1" "$STATE_DIR/tests.log" 2>/dev/null || echo "0")
 
     if [ "$TOTAL_EDITS" -ge 6 ] && [ "$TOTAL_TEST_FAILS" -ge 3 ] && [ ! -f "$STATE_DIR/.composite_spiral" ]; then
-        notify "IMPLEMENTATION_HEALTH [FIX_TEST_SPIRAL]: ${TOTAL_EDITS} edits + ${TOTAL_TEST_FAILS} test failures. Patrón edit→test→fail confirmado. Invoca /recovery o haz /clear y replantea con scope reducido."
+        alert "IMPLEMENTATION_HEALTH [FIX_TEST_SPIRAL]: ${TOTAL_EDITS} edits + ${TOTAL_TEST_FAILS} test failures. Patrón edit→test→fail confirmado. Invoca /recovery o haz /clear y replantea con scope reducido."
         touch "$STATE_DIR/.composite_spiral"
     fi
+fi
+
+# ─── EMIT STRUCTURED JSON FOR CLAUDE ────────────────────────────────────────
+if [ -n "$ALERTS" ]; then
+    ESCAPED=$(echo "$ALERTS" | sed 's/\\/\\\\/g; s/"/\\"/g')
+    echo "{\"hookSpecificOutput\":{\"hookEventName\":\"PostToolUse\",\"additionalContext\":\"${ESCAPED}\"}}"
 fi
 
 exit 0
