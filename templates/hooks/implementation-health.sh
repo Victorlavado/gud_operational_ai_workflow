@@ -76,22 +76,30 @@ mkdir -p "$STATE_DIR" 2>/dev/null || exit 0
 # ─── FILE CHURN DETECTION ───────────────────────────────────────────────────
 if [ "$TOOL_NAME" = "Edit" ] || [ "$TOOL_NAME" = "Write" ] || [ "$TOOL_NAME" = "MultiEdit" ]; then
     if [ -n "$FILE_PATH" ]; then
-        echo "$FILE_PATH" >> "$STATE_DIR/edits.log"
+        # Skip tracking/documentation files — high edit counts are normal workflow
+        IS_TRACKABLE=true
+        case "$FILE_PATH" in
+            */docs/*|*/README.md) IS_TRACKABLE=false ;;
+        esac
 
-        EDIT_COUNT=$(grep -cF "$FILE_PATH" "$STATE_DIR/edits.log" 2>/dev/null || echo "0")
-        BASENAME=$(basename "$FILE_PATH")
-        FILE_HASH=$(echo "$FILE_PATH" | md5sum | cut -c1-8)
+        if [ "$IS_TRACKABLE" = true ]; then
+            echo "$FILE_PATH" >> "$STATE_DIR/edits.log"
 
-        # Threshold 4: warning (fires once per file)
-        if [ "$EDIT_COUNT" -ge 4 ] && [ ! -f "$STATE_DIR/.churn_4_${FILE_HASH}" ]; then
-            alert "IMPLEMENTATION_HEALTH [FILE_CHURN]: ${BASENAME} editado ${EDIT_COUNT} veces en esta sesión. Si son correcciones al mismo problema, el enfoque actual probablemente no funciona. Considera replantear."
-            touch "$STATE_DIR/.churn_4_${FILE_HASH}"
-        fi
+            EDIT_COUNT=$(grep -cF "$FILE_PATH" "$STATE_DIR/edits.log" 2>/dev/null || echo "0")
+            BASENAME=$(basename "$FILE_PATH")
+            FILE_HASH=$(echo "$FILE_PATH" | md5sum | cut -c1-8)
 
-        # Threshold 7: critical (fires once per file)
-        if [ "$EDIT_COUNT" -ge 7 ] && [ ! -f "$STATE_DIR/.churn_7_${FILE_HASH}" ]; then
-            alert "IMPLEMENTATION_HEALTH [FILE_CHURN_CRITICAL]: ${BASENAME} editado ${EDIT_COUNT} veces. Señal clara de espiral. Invoca /recovery para diagnóstico y recomendación de recuperación."
-            touch "$STATE_DIR/.churn_7_${FILE_HASH}"
+            # Churn without validation: many edits but no tests run (fires once per file)
+            if [ "$EDIT_COUNT" -ge 4 ] && [ ! -f "$STATE_DIR/.churn_notest_${FILE_HASH}" ]; then
+                TESTS_RUN=0
+                if [ -f "$STATE_DIR/tests.log" ]; then
+                    TESTS_RUN=$(wc -l < "$STATE_DIR/tests.log" | tr -d '[:space:]')
+                fi
+                if [ "$TESTS_RUN" -eq 0 ]; then
+                    alert "IMPLEMENTATION_HEALTH [NO_VALIDATION]: ${BASENAME} editado ${EDIT_COUNT} veces sin ejecutar tests. Muchos cambios sin validación."
+                    touch "$STATE_DIR/.churn_notest_${FILE_HASH}"
+                fi
+            fi
         fi
     fi
 fi
