@@ -1,139 +1,148 @@
 # Operational AI Workflows
 
-Framework operativo para maximizar la efectividad del desarrollador trabajando con herramientas de IA (Claude Code).
+An operational framework for maximizing developer effectiveness when working with AI tools (Claude Code primarily).
 
-## Capas
+## Layers
 
 ```
-Capa 4: Agent Orchestration      — paralelizar, dispatch, channels, oversight
-Capa 3: Context Continuity       — no perder el hilo entre sesiones
-Capa 2: Spec-First Development   — revisar intención, no código
-Capa 1: Project Intelligence     — CLAUDE.md como cerebro del proyecto  <-- implementada
+Layer 4: Agent Orchestration      — parallelize, dispatch, channels, oversight
+Layer 3: Context Continuity       — maintain thread across sessions
+Layer 2: Spec-First Development   — review intent, not code
+Layer 1: Project Intelligence     — CLAUDE.md as the project's brain  <-- implemented
 ```
 
-## Instalación
+## Installation
 
-### Primera vez
+### First time
 
 ```bash
-# Desde cualquier máquina con el repo clonado:
+# From any machine with the repo cloned:
 git clone https://github.com/Victorlavado/gud_operational_ai_workflow.git
 cd gud_operational_ai_workflow
 
-# Instalar en un proyecto:
-./install.sh ~/dev/mi-proyecto
+# Install into a project:
+./install.sh ~/dev/my-project
 ```
 
-Esto instala hooks, skills, commands y configuración. Después, abre Claude Code en el proyecto y ejecuta `/init-project` para generar el CLAUDE.md.
+This installs hooks, skills, commands, and configuration. Then open Claude Code in the project and run `/init-project` to generate the CLAUDE.md.
 
-### Actualización automática
+### Automatic updates
 
-Los proyectos instalados se **actualizan solos**. Un hook `SessionStart` comprueba GitHub al iniciar cada sesión de Claude Code:
+Installed projects **update themselves**. A `SessionStart` hook checks GitHub at the start of each Claude Code session:
 
 ```
-[Framework repo en GitHub]
-        │
-        │  push (VERSION bumped)
-        ▼
-[SessionStart hook en tu proyecto]
-        │
-        ├── compara VERSION local vs remota (1 request, <3s, max 1x/hora)
-        ├── si hay cambio → descarga y sincroniza hooks, skills, commands, Common Layer
-        └── si no hay cambio → nada
+[Framework repo on GitHub]
+        |
+        |  push (VERSION bumped)
+        v
+[SessionStart hook in your project]
+        |
+        |-- compares local vs remote VERSION (1 request, <3s, max 1x/hour)
+        |-- if changed -> downloads and syncs hooks, skills, commands, Common Layer
+        +-- if unchanged -> nothing
 ```
 
-Sin intervención manual. Funciona en cualquier máquina con acceso a internet.
+No manual intervention. Works on any machine with internet access.
 
-### Actualización manual
+### Manual update
 
-Si prefieres control explícito o no tienes internet:
+If you prefer explicit control or don't have internet:
 
 ```bash
-# Desde el repo del framework (local):
-./bin/sync.sh ~/dev/mi-proyecto
+# From the framework repo (local):
+./bin/sync.sh ~/dev/my-project
 
-# O directamente con el install script:
-./install.sh ~/dev/mi-proyecto
+# Or directly with the install script:
+./install.sh ~/dev/my-project
 ```
 
-### Qué se sincroniza
+### What gets synced
 
-| Artefacto | Fuente | Destino |
-|-----------|--------|---------|
+| Artifact | Source | Destination |
+|----------|--------|-------------|
 | Hooks | `templates/hooks/*.sh` | `.claude/hooks/` |
 | Skills | `.claude/skills/*/SKILL.md` | `.claude/skills/` |
 | Commands | `.claude/commands/*.md` | `.claude/commands/` |
 | Settings | `templates/hooks/settings.json.template` | `.claude/settings.json` (merge) |
-| Common Layer | `templates/common-layer.md` | Sección marcada en `CLAUDE.md` |
-| Versión | `VERSION` | `.claude/.framework-version` |
+| Common Layer | `templates/common-layer.md` | Marked section in `CLAUDE.md` |
+| Version | `VERSION` | `.claude/.framework-version` |
 
-El **Project Layer** del CLAUDE.md nunca se toca — es propiedad del proyecto.
+The **Project Layer** of CLAUDE.md is never touched — it belongs to the project.
 
-## Uso rápido
+## Quick start
 
-### Proyecto nuevo
+### New project
 ```
-/init-project ~/dev/mi-proyecto
+/init-project ~/dev/my-project
 ```
-Genera un CLAUDE.md con Common Layer (universal) + Project Layer (vacío) + hooks de automatización.
+Generates a CLAUDE.md with Common Layer (universal) + Project Layer (empty) + automation hooks.
 
-### Proyecto existente
+### Existing project
 ```
-/init-project ~/dev/mi-proyecto
-/bootstrap-intelligence ~/dev/mi-proyecto
+/init-project ~/dev/my-project
+/bootstrap-intelligence ~/dev/my-project
 ```
-Genera el CLAUDE.md y luego escanea sesiones pasadas, git history y código para pre-rellenar gotchas, patrones y convenciones.
+Generates the CLAUDE.md and then scans past sessions, git history, and code to pre-fill gotchas, patterns, and conventions.
 
-### Día a día
-- Trabaja normal. El **hook Stop** revisa automáticamente al final de cada sesión y propone actualizaciones al CLAUDE.md.
-- Cuando encuentras algo interesante: añade la URL a `inbox.md` desde cualquier dispositivo.
-- Cuando te sientes a trabajar: `/process-inbox` procesa las URLs en batch.
-- Cada semana: `/weekly-briefing` para un scan del ecosistema.
+### Day-to-day
+- Work normally. The **Stop hook** automatically reviews at the end of each session and proposes CLAUDE.md updates.
+- When you find something interesting: add the URL to `inbox.md` from any device.
+- When you sit down to work: `/process-inbox` processes URLs in batch.
+- Every week: `/weekly-briefing` for an ecosystem scan.
 
-## Arquitectura del CLAUDE.md
+## CLAUDE.md Architecture
 
 ```
 CLAUDE.md = Common Layer + Project Layer
 ```
 
 **Common Layer** (`templates/common-layer.md`):
-- Context management (degradación al 40%, /clear, sub-agentes)
-- Work patterns (monotarea, specs como fuente de verdad)
-- Quality gates por defecto (tests, lint, types)
+- Context management (degradation at ~40%, /clear, sub-agents)
+- Work patterns (monotask, specs as source of truth)
+- Default quality gates (tests, lint, types)
+- Test evaluation surface (opt-in hook for mature test suites)
 - Commit conventions (conventional commits)
-- Anti-patterns universales
+- Universal anti-patterns
 - Session discipline
 
 **Project Layer** (`templates/project-layer.md`):
-- Architecture (diagrama, stack, boundaries)
-- Domain (modelos, reglas de negocio, vocabulario)
-- Patterns (convenciones de código, patrones arquitectónicos)
-- Gotchas (trampas conocidas — se acumulan automáticamente)
-- Quality gates específicos del proyecto
+- Architecture (diagram, stack, boundaries)
+- Domain (models, business rules, vocabulary)
+- Patterns (code conventions, architectural patterns)
+- Gotchas (known traps — accumulated automatically)
+- Project-specific quality gates
 - Workflow (branching, deploy)
-- Commands (comandos específicos)
+- Commands (project-specific commands)
 
-## Automatización
+**Path-Scoped Rules** (`.claude/rules/<area>.md`):
+- Instructions that only apply to a specific area of the project
+- Use Claude Code's native format with `globs` frontmatter
+- Decision rule: path-specific → `.claude/rules/`, global → CLAUDE.md
+- Generated automatically by `/bootstrap-intelligence`
 
-| Mecanismo | Cuándo | Qué hace |
-|-----------|--------|----------|
-| Hook auto-update | Al iniciar sesión | Comprueba nueva versión del framework → sincroniza automáticamente |
-| Hook Stop | Al terminar cada sesión | Revisa si hay gotchas/patrones nuevos → propone CLAUDE.md updates |
-| Hook context-watchdog | Cada tool call | Lee % real de contexto consumido y alerta en umbrales de degradación (40%/65%/80%) |
-| Hook implementation-health | Cada Edit/Bash | Detecta file churn, retry loops, test regression → recomienda `/recovery` |
-| Status line | Cada respuesta de Claude | Muestra barra de contexto + alertas de hooks en la terminal del usuario |
-| `/recovery` | Auto (por hook) o bajo demanda | Diagnóstico objetivo de la sesión + recomendación de recuperación + prompt de reanudación |
-| `/context-check` | Bajo demanda | Diagnóstico del estado del contexto |
-| `/session-review` | Bajo demanda / auto (Stop) | Análisis completo de la sesión actual |
-| `/bootstrap-intelligence` | Al integrar proyecto existente | Escanea historial y código → pre-rellena CLAUDE.md |
-| `/process-inbox` | Cuando te sientes a trabajar | Procesa URLs capturadas desde móvil |
-| `/weekly-briefing` | Semanal | Scan de ecosystem + búsqueda abierta |
+## Automation
 
-## Estructura del repo
+| Mechanism | When | What it does |
+|-----------|------|--------------|
+| Auto-update hook | On session start | Checks for new framework version -> syncs automatically |
+| Stop hook | At end of each session | Checks for new gotchas/patterns -> proposes CLAUDE.md updates |
+| Context-watchdog hook | Every tool call | Reads real context % consumed and alerts at degradation thresholds (40%/65%/80%) |
+| Implementation-health hook | Every Edit/Bash | Detects file churn, retry loops, test regression -> recommends `/recovery` |
+| Status line | Every Claude response | Shows context bar + hook alerts in the user's terminal |
+| Test evaluation warning | Every Bash (git commit) | Warns when existing tests modified alongside implementation (opt-in via `.claude/.test-eval-enabled`) |
+| Knowledge graduation | Every session-review | Logs corrections to `.claude/corrections.log`, auto-promotes to CLAUDE.md after 3 occurrences |
+| `/recovery` | Auto (via hook) or on demand | Objective session diagnosis + recovery recommendation + resumption prompt |
+| `/context-check` | On demand | Context state diagnosis |
+| `/session-review` | On demand / auto (Stop) | Full analysis + correction logging + knowledge graduation |
+| `/bootstrap-intelligence` | When integrating existing project | Scans history and code -> pre-fills CLAUDE.md |
+| `/process-inbox` | When you sit down to work | Processes URLs captured from mobile |
+| `/weekly-briefing` | Weekly | Ecosystem scan + open discovery |
+
+## Repo structure
 
 ```
 bin/
-  sync.sh                  # Motor de sincronización (local y remoto)
+  sync.sh                  # Sync engine (local and remote)
 templates/
   common-layer.md          # Universal principles (portable across all projects)
   project-layer.md         # Project-specific template (domain, architecture, gotchas)
@@ -143,6 +152,9 @@ protocols/
   external-intelligence.md # Sources, filters, processing pipeline, cadences
 knowledge-base/
   insights/                # Processed insights from external sources
+docs/
+  brainstorms/             # Brainstorm documents
+  plans/                   # Implementation plans
 inbox.md                   # Low-friction URL capture (mobile-friendly)
 install.sh                 # First-time installer (wrapper around bin/sync.sh)
 VERSION                    # Framework version (triggers auto-update on bump)
@@ -152,21 +164,22 @@ VERSION                    # Framework version (triggers auto-update on bump)
   settings.json            # Hook configuration
 ```
 
-## Principios
+## Principles
 
-- **Contrapresión sobre confianza** — Tests, linters y tipos mantienen al agente en el camino correcto
-- **Specs como fuente de verdad** — El código es un artefacto derivado de la spec
-- **Contexto fresco por iteración** — Evitar degradación del contexto. Una tarea por ciclo
-- **Sobre el loop, no en el loop** — Supervisar el proceso, no ejecutar línea por línea
-- **Automatizar el mantenimiento** — Hooks y skills mantienen el sistema vivo sin depender del humano
-- **Framework vivo** — Se alimenta del trabajo diario (interno) y del ecosistema (externo)
+- **Back-pressure over trust** — Tests, linters, and types keep the agent on track
+- **Structure over instruction** — Structural constraints (hooks, rules files, immutable evaluation) outperform behavioral instructions in CLAUDE.md
+- **Specs as source of truth** — Code is a derived artifact of the spec
+- **Fresh context per iteration** — Avoid context degradation. One task per cycle
+- **On the loop, not in the loop** — Supervise the process, don't execute line by line
+- **Automate maintenance** — Hooks and skills keep the system alive without depending on the human
+- **Living framework** — Fed by daily work (internal) and the ecosystem (external)
 
 ## Knowledge Base
 
-Insights procesados en `knowledge-base/insights/`:
-- Ralph Loop y contrapresión (ghuntley.com)
-- Ingeniería de contexto (latentpatterns.com)
-- Skill issue y developer como director (Karpathy)
-- Matar la revisión de código (Latent Space)
-- Best practices de Claude Code (Anthropic)
-- Patrones de agentes (Anthropic Engineering)
+Processed insights in `knowledge-base/insights/`:
+- Ralph Loop and back-pressure (ghuntley.com)
+- Context engineering (latentpatterns.com)
+- Skill issue and developer as director (Karpathy)
+- Kill code review (Latent Space)
+- Claude Code best practices (Anthropic)
+- Agent patterns (Anthropic Engineering)

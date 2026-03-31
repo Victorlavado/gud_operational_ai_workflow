@@ -1,7 +1,7 @@
 ---
 title: "Structure Over Instruction: Path-Scoped Rules, Evaluation Surface Warning, Knowledge Graduation"
 type: feat
-status: active
+status: completed
 date: 2026-03-31
 origin: docs/brainstorms/2026-03-31-structure-over-instruction-brainstorm.md
 ---
@@ -247,10 +247,10 @@ Reference `corrections.log` in:
 - [x] `corrections.log` is committed (not gitignored — no .gitignore entry needed)
 
 ### Post-implementation: README.md
-- [ ] `README.md` updated to reflect new capabilities (path-scoped rules, test evaluation hook, knowledge graduation)
-- [ ] Automation table updated with new hook entry
-- [ ] Repo structure updated if new files/directories were added
-- [ ] Principles section updated if the "structure > instruction" meta-principle warrants mention
+- [x] `README.md` updated to reflect new capabilities (path-scoped rules, test evaluation hook, knowledge graduation)
+- [x] Automation table updated with new hook entry
+- [x] Repo structure updated if new files/directories were added
+- [x] Principles section updated if the "structure > instruction" meta-principle warrants mention
 
 ### Bonus
 - [x] `statusline.sh` added to `sync.sh` hook list
