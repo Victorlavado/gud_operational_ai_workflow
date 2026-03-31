@@ -62,6 +62,31 @@ Busca en el historial:
 - CI checks configurados
 - Hooks pre-commit existentes
 
+### Fase 2.5: Generar path-scoped rules
+
+Después de la síntesis, detecta áreas del proyecto que se beneficiarían de reglas path-scoped:
+
+1. **Detectar áreas con código significativo**: Busca directorios con >5 archivos que representan un área funcional distinta (ej: `src/api/`, `app/models/`, `frontend/`, `workers/`, `lib/services/`)
+2. **Para cada área detectada**, genera un archivo `.claude/rules/<area>.md` con:
+
+```markdown
+---
+globs: ["<path-pattern>/**"]
+---
+
+# [Area Name] — Conventions
+
+## Patterns
+[Patrones específicos descubiertos para esta área]
+
+## Gotchas
+[Gotchas específicos de esta área]
+```
+
+3. **Regla de decisión**: Si un hallazgo (gotcha, patrón, anti-pattern) solo aplica cuando se editan archivos de un área específica → va a `.claude/rules/<area>.md`. Si aplica globalmente → va a CLAUDE.md.
+4. **No duplicar**: El contenido que va a rules files NO se incluye también en CLAUDE.md.
+5. **Presentar al usuario**: Muestra los rules files propuestos para aprobación, igual que las propuestas de CLAUDE.md.
+
 ### Fase 3: Generar o actualizar CLAUDE.md
 
 **Si no existe CLAUDE.md:**

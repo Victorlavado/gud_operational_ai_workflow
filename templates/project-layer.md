@@ -4,7 +4,25 @@
      actual architecture, domain, and conventions. Delete sections that don't apply.
 
      The Common Layer (above) handles universal principles.
-     This layer handles what makes YOUR project unique. -->
+     This layer handles what makes YOUR project unique.
+
+     PATH-SCOPED RULES — Structure over instruction:
+     If an instruction only applies when editing files in a specific area,
+     move it to .claude/rules/<area>.md instead of keeping it here.
+     If it applies globally, it stays in this file.
+
+     Rules files use Claude Code's native format:
+     ```
+     .claude/rules/api.md
+     ---
+     globs: ["src/api/**", "app/controllers/**"]
+     ---
+     # API Conventions
+     - Always use DTOs for request/response serialization
+     ```
+
+     Claude Code loads rules files automatically when editing matching paths.
+     Use /bootstrap-intelligence to auto-generate rules files from your codebase. -->
 
 ---
 
@@ -59,7 +77,11 @@
 
 ## Patterns
 
-<!-- WITHOUT THIS: Claude defaults to its training distribution, not your project's conventions. -->
+<!-- WITHOUT THIS: Claude defaults to its training distribution, not your project's conventions.
+
+     PATH-SCOPED: If conventions differ by area (e.g., API vs frontend vs workers),
+     move area-specific patterns to .claude/rules/<area>.md with globs frontmatter.
+     Keep only global conventions here. -->
 
 ### Code conventions
 
@@ -79,7 +101,11 @@
 ## Gotchas
 
 <!-- HIGHEST ROI SECTION. Every gotcha here was discovered the hard way.
-     Add new gotchas IMMEDIATELY when discovered — don't wait. -->
+     Add new gotchas IMMEDIATELY when discovered — don't wait.
+
+     PATH-SCOPED: Gotchas tied to a specific subsystem (e.g., "in the payments
+     module, always use idempotency keys") belong in .claude/rules/<subsystem>.md.
+     Keep universal project gotchas here. -->
 
 ### Critical
 
@@ -93,7 +119,11 @@
 
 ## Quality Gates — Project Overrides
 
-<!-- Override or extend the Common Layer defaults for this project's specific tooling. -->
+<!-- Override or extend the Common Layer defaults for this project's specific tooling.
+
+     PATH-SCOPED: If different areas have different quality gates (e.g., stricter
+     linting for API code, different test commands for frontend), use
+     .claude/rules/<area>.md with the specific overrides. -->
 
 ```bash
 # Tests

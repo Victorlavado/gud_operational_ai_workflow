@@ -61,13 +61,23 @@ Muestra las propuestas ordenadas por prioridad. Para cada una:
 - **Modificar**: el usuario ajusta antes de aplicar
 - **Descartar**: no relevante o ya conocido
 
-### 5. Aplicar cambios
+### 5. Aplicar cambios (con routing a rules files)
 
 Para las propuestas aceptadas:
 1. Lee el CLAUDE.md actual
-2. Inserta el nuevo contenido en la sección correspondiente
-3. Verifica que el CLAUDE.md no supere las 400 líneas (zona inteligente)
-4. Si supera: sugiere qué mover a archivos referenciados via `@path`
+2. **Comprueba si existen archivos `.claude/rules/`** en el proyecto
+3. **Routing de contenido** — Para cada propuesta, aplica la regla de decisión:
+   - Si el hallazgo solo aplica cuando se editan archivos de un área específica Y existe un rules file con globs que cubren esa área → propone insertar en el rules file
+   - Si no existe un rules file que cubra el área → propone insertar en CLAUDE.md (comportamiento existente)
+   - Si el hallazgo aplica globalmente → propone insertar en CLAUDE.md
+4. Inserta el nuevo contenido en el destino correspondiente (CLAUDE.md o rules file)
+5. Verifica que el CLAUDE.md no supere las 400 líneas (zona inteligente)
+6. Si supera: sugiere descomponer contenido path-specific a archivos `.claude/rules/<area>.md` con globs frontmatter. Ejemplo:
+   ```
+   El CLAUDE.md tiene [N] líneas (zona de peligro >400).
+   Sugiero mover las convenciones de [área] a .claude/rules/[area].md
+   para reducir el tamaño y mejorar la precisión del contexto.
+   ```
 
 ### 6. Clasificar y proponer upstream (reverse sync)
 

@@ -91,7 +91,17 @@ Muestra:
 - Qué secciones necesitan ser completadas manualmente
 - Sugiere ejecutar `/bootstrap-intelligence` si el proyecto tiene historial de sesiones en `.claude/`
 
-### 8. Si el proyecto tiene sesiones previas
+### 8. Mencionar path-scoped rules
+
+Informa al usuario:
+```
+Las instrucciones que solo aplican a un área específica del proyecto (ej: convenciones de API,
+gotchas de frontend) pueden ir en archivos .claude/rules/<area>.md en vez de en CLAUDE.md.
+Claude Code los carga automáticamente según los archivos que se editen.
+Ejecuta /bootstrap-intelligence para generar estos archivos basándose en tu código.
+```
+
+### 9. Si el proyecto tiene sesiones previas
 
 Si detectas un directorio `.claude/` con sesiones o historial:
 ```
