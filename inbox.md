@@ -1,11 +1,11 @@
 # Inbox
 
-Añade URLs aquí desde cualquier dispositivo. Formato: `- <url> — [nota breve]`
-Procesa con `/process-inbox` cuando te sientes a trabajar.
+Add URLs here from any device. Format: `- <url> — [brief note]`
+Process with `/process-inbox` when you sit down to work.
 
 ---
 
-<!-- Ejemplo:
-- https://example.com/article — Patrón interesante de paralelización de agentes
-- https://github.com/user/repo — Framework de orquestación que usa Temporal
+<!-- Example:
+- https://example.com/article — Interesting agent parallelization pattern
+- https://github.com/user/repo — Orchestration framework using Temporal
 -->
