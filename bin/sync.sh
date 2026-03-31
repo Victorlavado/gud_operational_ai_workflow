@@ -90,7 +90,7 @@ mkdir -p "$TARGET_DIR/.claude/skills/propose-upstream"
 mkdir -p "$TARGET_DIR/.claude/commands"
 
 # 2. Sync hooks
-for hook in context-watchdog.sh implementation-health.sh session-review-hook.sh auto-update.sh; do
+for hook in context-watchdog.sh implementation-health.sh session-review-hook.sh auto-update.sh statusline.sh test-evaluation-warning.sh; do
     sync_file "templates/hooks/$hook" "$TARGET_DIR/.claude/hooks/$hook" "hook: $hook"
     chmod +x "$TARGET_DIR/.claude/hooks/$hook" 2>/dev/null || true
 done

@@ -230,13 +230,13 @@ Reference `corrections.log` in:
 - [x] `sync.sh` does NOT sync rules files (verified — no changes needed, rules are project-owned)
 
 ### Phase 2: Test Evaluation Warning Hook
-- [ ] `templates/hooks/test-evaluation-warning.sh` exists and follows existing hook patterns
-- [ ] Hook only fires when `.claude/.test-eval-enabled` exists (opt-in)
-- [ ] Hook warns on `M`odified test files, ignores `A`dded test files
-- [ ] Warning appears in status line and stderr
-- [ ] Hook is wired in `settings.json.template`
-- [ ] Hook is synced by `sync.sh`
-- [ ] Documented in `common-layer.md`
+- [x] `templates/hooks/test-evaluation-warning.sh` exists and follows existing hook patterns
+- [x] Hook only fires when `.claude/.test-eval-enabled` exists (opt-in)
+- [x] Hook warns on `M`odified test files, ignores `A`dded test files
+- [x] Warning appears in status line and stderr
+- [x] Hook is wired in `settings.json.template`
+- [x] Hook is synced by `sync.sh`
+- [x] Documented in `common-layer.md`
 
 ### Phase 3: Knowledge Graduation
 - [ ] Session-review writes corrections to `.claude/corrections.log` (TSV format)
@@ -253,7 +253,7 @@ Reference `corrections.log` in:
 - [ ] Principles section updated if the "structure > instruction" meta-principle warrants mention
 
 ### Bonus
-- [ ] `statusline.sh` added to `sync.sh` hook list
+- [x] `statusline.sh` added to `sync.sh` hook list
 
 ## Dependencies & Risks
 

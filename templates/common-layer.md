@@ -12,44 +12,44 @@
      during a session. Source: Latent Patterns context engineering research.
      The context-watchdog hook automates threshold alerts via PostToolUse. -->
 
-- IMPORTANT: La "zona inteligente" del contexto está al ~40% de utilización. Más allá, la calidad degrada.
-- El **context-watchdog hook** monitoriza tool calls y emite alertas automáticas en 3 umbrales:
-  - **AMARILLO (30 tool calls)**: acercándote al límite. No empieces tareas nuevas.
-  - **NARANJA (50 tool calls)**: fuera de zona inteligente. Usa `/compact` o finaliza la tarea actual.
-  - **ROJO (80 tool calls)**: alto riesgo. Documenta estado, haz `/clear`, retoma con prompt fresco.
-- Usa `/context-check` en cualquier momento para un diagnóstico completo del estado del contexto.
-- Usa `/clear` entre tareas no relacionadas en la misma sesión. El contexto acumulado degrada rendimiento.
-- **Regla de los dos intentos**: si corriges a Claude 2+ veces en el mismo problema, usa `/clear` y reformula el prompt incorporando lo aprendido.
-- Usa `/compact <instrucciones>` para comprimir contexto manteniendo lo esencial. Ejemplo: `/compact Focus on the API changes`. IMPORTANT: Al usar /compact, especifica qué preservar (archivos modificados, decisiones, estado de tests).
-- Usa sub-agentes (Agent tool) para tareas que producen mucho output: tests, búsquedas extensas, análisis de logs. Ejecutan en ventanas de contexto separadas y devuelven resúmenes.
-- NO satures este CLAUDE.md con información que puedes descubrir leyendo el código. Reserva este archivo para lo que Claude NO puede inferir.
+- IMPORTANT: The "smart zone" of the context window is at ~40% utilization. Beyond that, quality degrades.
+- The **context-watchdog hook** monitors tool calls and emits automatic alerts at 3 thresholds:
+  - **YELLOW (40%)**: approaching the limit. Don't start new tasks.
+  - **ORANGE (65%)**: beyond the effective zone. Use `/compact` or finish the current task.
+  - **RED (80%)**: high risk. Document state, `/clear`, resume with a fresh prompt.
+- Use `/context-check` at any time for a full diagnosis of context state.
+- Use `/clear` between unrelated tasks in the same session. Accumulated context degrades performance.
+- **Two-attempt rule**: if you correct Claude 2+ times on the same problem, use `/clear` and reformulate the prompt incorporating what you learned.
+- Use `/compact <instructions>` to compress context while keeping essentials. Example: `/compact Focus on the API changes`. IMPORTANT: When using /compact, specify what to preserve (modified files, decisions, test state).
+- Use sub-agents (Agent tool) for tasks that produce heavy output: tests, extensive searches, log analysis. They run in separate context windows and return summaries.
+- DO NOT bloat this CLAUDE.md with information discoverable by reading the code. Reserve this file for what Claude CANNOT infer.
 
-### Señales de degradación (vigílalas activamente)
+### Degradation signals (actively watch for these)
 
-Si observas CUALQUIERA de estas señales, el contexto está degradado:
-- Claude "olvida" decisiones tomadas antes en la misma sesión
-- Claude repite errores que ya fueron corregidos
-- Claude ignora instrucciones que están en este CLAUDE.md
-- Las respuestas se vuelven genéricas o pierden especificidad del proyecto
-- Claude propone soluciones que contradicen patrones ya establecidos
+If you observe ANY of these signals, context is degraded:
+- Claude "forgets" decisions made earlier in the same session
+- Claude repeats errors that were already corrected
+- Claude ignores instructions in this CLAUDE.md
+- Responses become generic or lose project specificity
+- Claude proposes solutions that contradict established patterns
 
-**Protocolo ante degradación:**
-1. NO sigas trabajando — cada interacción adicional empeora la situación
-2. Invoca `/recovery` para diagnóstico automático basado en señales objetivas y recomendación de acción
-3. Si `/recovery` no está disponible: documenta estado, commit WIP, `/clear` + prompt de reanudación
+**Degradation protocol:**
+1. DO NOT keep working — each additional interaction worsens the situation
+2. Invoke `/recovery` for automatic diagnosis based on objective signals and action recommendation
+3. If `/recovery` is unavailable: document state, WIP commit, `/clear` + resumption prompt
 
-El **hook implementation-health** detecta automáticamente patrones de espiral (file churn, test regression, retry loops) y recomienda invocar `/recovery` cuando las señales lo justifican.
+The **implementation-health hook** automatically detects spiral patterns (file churn, test regression, retry loops) and recommends invoking `/recovery` when signals warrant it.
 
 ## Work Patterns
 
 <!-- How the agent should approach work. Source: Huntley's Ralph Loop,
      Karpathy's skill issue, Anthropic's agent patterns. -->
 
-- **Una tarea por ciclo.** No mezclar múltiples objetivos en una misma iteración del agente.
-- **Specs como fuente de verdad.** Leer specs/planes del disco antes de implementar. El código es un artefacto derivado de la spec.
-- **Verificar antes de empezar.** Ejecutar tests existentes antes de iniciar trabajo nuevo para detectar bugs heredados.
-- **No usar agentes autónomos cuando un workflow predefinido basta.** Progresión: prompt simple → LLM + retrieval → workflow → agente.
-- **Expresar intención, no código.** Descomponer objetivos en tareas, revisar a nivel macro.
+- **One task per cycle.** Don't mix multiple objectives in a single agent iteration.
+- **Specs as source of truth.** Read specs/plans from disk before implementing. Code is a derived artifact of the spec.
+- **Verify before starting.** Run existing tests before starting new work to detect inherited bugs.
+- **Don't use autonomous agents when a predefined workflow suffices.** Progression: simple prompt -> LLM + retrieval -> workflow -> agent.
+- **Express intent, not code.** Break down objectives into tasks, review at the macro level.
 
 ## Quality Gates — Defaults
 
@@ -60,71 +60,75 @@ El **hook implementation-health** detecta automáticamente patrones de espiral (
 
 YOU MUST run these checks before every commit. No exceptions:
 
-1. **Tests**: Ejecutar la suite de tests del proyecto. Si falla un test, NO hacer commit.
-2. **Linting**: Ejecutar el linter configurado. Corregir antes de commit.
-3. **Type checking**: Si el proyecto usa tipos estáticos, ejecutar el type checker.
-4. **Build**: Si el proyecto tiene build step, verificar que compila.
+1. **Tests**: Run the project's test suite. If a test fails, DO NOT commit.
+2. **Linting**: Run the configured linter. Fix before committing.
+3. **Type checking**: If the project uses static types, run the type checker.
+4. **Build**: If the project has a build step, verify it compiles.
 
-### Test requirements por tipo de cambio
+### Test requirements by change type
 
-- **Nueva feature**: unit tests + integration test como mínimo
-- **Bug fix**: test de regresión que reproduce el bug primero, luego el fix
-- **Refactor**: los tests existentes deben pasar sin modificación
+- **New feature**: unit tests + integration test at minimum
+- **Bug fix**: regression test that reproduces the bug first, then the fix
+- **Refactor**: existing tests must pass without modification
+
+### Test evaluation surface (opt-in)
+
+For projects with mature test suites: enable the **test-evaluation-warning hook** by creating `.claude/.test-eval-enabled`. The hook warns when existing tests are modified alongside implementation in the same commit — a signal that tests may have been weakened to pass instead of fixing the actual code. New test files (additions) do not trigger the warning.
 
 ### Infrastructure checks
 
-- Si el proyecto usa containers: reconstruir después de CUALQUIER cambio en el código del servicio
-- Verificar logs del servicio después de reconstruir
+- If the project uses containers: rebuild after ANY change to service code
+- Check service logs after rebuilding
 
 ## Commit Conventions
 
-<!-- Commits vagos ("various fixes", "added missing files") hacen imposible
-     reconstruir el contexto. Conventional commits fuerzan claridad. -->
+<!-- Vague commits ("various fixes", "added missing files") make it impossible
+     to reconstruct context. Conventional commits enforce clarity. -->
 
-- Usar conventional commits: `type(scope): description`
-- Tipos: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`
-- Un cambio lógico por commit. NUNCA "various fixes" o "added files".
-- El mensaje describe el POR QUÉ, no el QUÉ (el diff ya muestra el qué).
+- Use conventional commits: `type(scope): description`
+- Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`
+- One logical change per commit. NEVER "various fixes" or "added files".
+- The message describes the WHY, not the WHAT (the diff already shows the what).
 
 ## Anti-patterns — Universal
 
 <!-- Things Claude tends to do across all projects. Catching these early
      prevents wasted time. -->
 
-- DO NOT crear archivos de utilidad genéricos. La lógica pertenece al módulo que la usa.
-- DO NOT añadir `type: ignore`, `# noqa`, `eslint-disable` salvo causa justificada documentada.
-- DO NOT usar print/console.log para debugging. Usar el logger del proyecto.
-- DO NOT generar código sin verificación. Siempre proveer tests o scripts de verificación.
-- DO NOT hacer "exploraciones infinitas" — acotar el scope de búsqueda antes de investigar.
-- DO NOT mezclar tareas no relacionadas en una misma sesión o commit.
+- DO NOT create generic utility files. Logic belongs in the module that uses it.
+- DO NOT add `type: ignore`, `# noqa`, `eslint-disable` without documented justification.
+- DO NOT use print/console.log for debugging. Use the project's logger.
+- DO NOT generate code without verification. Always provide tests or verification scripts.
+- DO NOT do "infinite exploration" — scope the search before investigating.
+- DO NOT mix unrelated tasks in the same session or commit.
 
 ## Session Discipline
 
 <!-- Source: Claude Code best practices + context watchdog system. -->
 
-### Al inicio de sesión
-- Leer CLAUDE.md, revisar git status, ejecutar tests básicos.
-- Si retomas trabajo previo: usa `claude --continue` o `claude --resume` para elegir sesión.
+### At session start
+- Read CLAUDE.md, check git status, run basic tests.
+- If resuming previous work: use `claude --continue` or `claude --resume` to pick a session.
 
-### Durante la sesión
-- Al cambiar de tarea: `/clear` si la nueva tarea no tiene relación con la anterior.
-- Al encontrar un gotcha: añadirlo INMEDIATAMENTE a la sección Gotchas de este archivo.
-- Al recibir alerta del context-watchdog: seguir el protocolo de degradación (arriba).
-- Si la implementación se complica (tests fallan repetidamente, múltiples cambios de enfoque): parar, hacer `/context-check`, decidir si continuar o `/clear` + reformular.
+### During the session
+- When switching tasks: `/clear` if the new task is unrelated to the previous one.
+- When discovering a gotcha: add it IMMEDIATELY to the Gotchas section of this file.
+- When receiving a context-watchdog alert: follow the degradation protocol (above).
+- If implementation gets complicated (tests fail repeatedly, multiple approach changes): stop, run `/context-check`, decide whether to continue or `/clear` + reformulate.
 
-### Al final de sesión
-- El hook session-review deja un marker al cerrar. La siguiente sesión detecta el marker y recuerda ejecutar `/session-review`.
-- Si hiciste `/clear` durante la sesión: verifica que los gotchas descubiertos antes del /clear no se perdieron.
-- **Stop hooks son silenciosos**: El stdout de hooks `Stop` no se muestra al usuario (anthropics/claude-code#16227). Para comunicar algo al cierre de sesión, usar estrategia de marker file: Stop escribe archivo → SessionStart lo lee y lo borra.
+### At session end
+- The session-review hook leaves a marker on close. The next session detects the marker and reminds to run `/session-review`.
+- If you did `/clear` during the session: verify that gotchas discovered before the /clear weren't lost.
+- **Stop hooks are silent**: stdout from `Stop` hooks is not shown to the user (anthropics/claude-code#16227). To communicate something at session close, use the marker file strategy: Stop writes file -> SessionStart reads and deletes it.
 
-### Recuperación de sesiones largas
-Cuando `/clear` es necesario pero no quieres perder contexto, documenta antes:
+### Recovering from long sessions
+When `/clear` is needed but you don't want to lose context, document first:
 ```
-## Estado al hacer /clear — [timestamp]
-- **Completado**: [qué se terminó]
-- **En progreso**: [qué quedó a medias + estado exacto]
-- **Decisiones**: [decisiones tomadas que deben preservarse]
-- **Gotchas**: [trampas descubiertas]
-- **Siguiente paso**: [exactamente qué hacer al retomar]
+## State at /clear — [timestamp]
+- **Completed**: [what was finished]
+- **In progress**: [what's halfway done + exact state]
+- **Decisions**: [decisions made that must be preserved]
+- **Gotchas**: [traps discovered]
+- **Next step**: [exactly what to do when resuming]
 ```
-Pega esto como primer mensaje de la sesión limpia.
+Paste this as the first message of the clean session.
