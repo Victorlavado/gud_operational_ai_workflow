@@ -79,9 +79,45 @@ Para las propuestas aceptadas:
    para reducir el tamaño y mejorar la precisión del contexto.
    ```
 
-### 6. Clasificar y proponer upstream (reverse sync)
+### 6. Registrar correcciones (Knowledge Graduation)
 
-Para cada hallazgo aplicado, evalúa si es **universal** o **project-specific**:
+Para cada hallazgo descubierto en la sesión (aplicado o no), registra en `.claude/corrections.log`:
+
+#### 6.1 Formato del log
+
+El archivo es TSV con header (crear si no existe):
+
+```tsv
+date	category	description	session	status
+```
+
+- **Categorías** (vocabulario controlado): `gotcha`, `pattern`, `anti-pattern`, `convention`, `quality-gate`, `domain-rule`
+- **Status**: `active` (cuenta hacia el threshold) o `promoted` (graduado, se omite en conteos futuros)
+- **Session**: identificador corto de la sesión actual
+
+#### 6.2 Antes de registrar, deduplicar
+
+1. Lee `.claude/corrections.log` si existe
+2. Comprueba si la corrección ya fue `promoted` — si ya existe como regla en CLAUDE.md o en un rules file, NO la registres de nuevo
+3. Si no está duplicada, append una línea TSV con status `active`
+
+#### 6.3 Comprobar graduaciones
+
+Después de registrar las correcciones de esta sesión:
+
+1. Lee `.claude/corrections.log` completo
+2. Agrupa las entradas `active` por similitud semántica (usa la categoría como hint de clustering y tu juicio para identificar correcciones que describen el mismo problema)
+3. Para grupos con **3 o más** entradas:
+   - Determina la sección destino en CLAUDE.md según la categoría (`gotcha` → Gotchas, `pattern` → Patterns, `anti-pattern` → Anti-patterns, `convention` → Patterns > Code conventions, `quality-gate` → Quality Gates, `domain-rule` → Domain > Business rules)
+   - Si `.claude/rules/` existe y un rules file cubre el path afectado → propone la actualización en el rules file
+   - Auto-promueve: añade la corrección al destino con una nota indicando que graduó desde 3 ocurrencias
+   - Marca TODAS las entradas del grupo como `promoted` en el log
+   - Notifica al usuario: `GRADUATION: "[descripción]" detectado en 3+ sesiones. Promovido a [destino].`
+4. Para grupos con <3 entradas: reporta como "correcciones en tendencia" en la salida de session-review (informacional, no bloquea)
+
+### 7. Clasificar y proponer upstream (reverse sync)
+
+Para cada hallazgo aplicado (incluyendo correcciones graduadas en el paso 6), evalúa si es **universal** o **project-specific**:
 
 - **Project-specific**: Gotchas de dominio, reglas de negocio, paths, APIs, configuraciones propias del proyecto. → Solo CLAUDE.md del proyecto.
 - **Universal**: Gotchas que aplican a CUALQUIER proyecto usando el framework (ej: "Stop hooks son silenciosos", "notify() necesario para visibilidad"). → CLAUDE.md del proyecto + `.claude/.upstream-proposals`.

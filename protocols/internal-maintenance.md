@@ -1,86 +1,88 @@
-# Protocolo de Mantenimiento Interno
+# Internal Maintenance Protocol
 
-Cómo mantener vivo el CLAUDE.md de un proyecto a partir del trabajo diario.
+How to keep a project's CLAUDE.md alive from daily work.
 
-## Principio
+## Principle
 
-> El CLAUDE.md es código, no documentación. Si no está actualizado, el agente produce basura.
-> Trátalo con la misma urgencia que un test roto.
-
----
-
-## Triggers de actualización
-
-### Inmediato (en la misma sesión)
-
-| Evento | Acción en CLAUDE.md |
-|--------|---------------------|
-| Descubres un gotcha nuevo | Añadir a `## Gotchas` con descripción y mitigación |
-| Un error se repite 2+ veces | Añadir a `## Gotchas > Critical` |
-| Claude genera código que viola un patrón | Añadir a `## Patterns > Anti-patterns` |
-| Cambias una regla de negocio | Actualizar `## Domain > Business rules` |
-| Añades una dependencia nueva al stack | Actualizar `## Architecture > Stack` |
-| Cambias comandos de build/test/deploy | Actualizar `## Commands` |
-
-### Al final de cada sesión
-
-- Revisar si algún gotcha descubierto durante la sesión falta en el CLAUDE.md
-- Si se estableció un patrón nuevo (usado en 2+ lugares), documentarlo
-- Si un quality gate cambió, actualizarlo
-
-### Post-mortem (cuando algo sale mal)
-
-Cuando un error significativo ocurre (tiempo perdido > 30 min, bug en prod, merge conflict grave):
-
-1. **Identificar la causa raíz**: ¿Por qué Claude hizo lo que hizo?
-2. **¿Faltaba información en el CLAUDE.md?**: Si sí, añadirla
-3. **¿Claude ignoró información existente?**: Si sí, reformular la sección para que sea más directa
-4. **¿Es un patrón recurrente?**: Si sí, añadir a Anti-patterns con ejemplo
+> CLAUDE.md is code, not documentation. If it's not up to date, the agent produces garbage.
+> Treat it with the same urgency as a broken test.
 
 ---
 
-## Cómo escribir para Claude
+## Update triggers
 
-### Reglas de redacción
+### Immediate (same session)
 
-1. **Imperativo directo**: "Siempre reconstruye los containers después de cambiar código Python" — no "Es recomendable reconstruir..."
-2. **Consecuencia explícita**: "Si no haces X, pasará Y" — Claude responde mejor cuando entiende el impacto
-3. **Ejemplo concreto**: Cuando sea posible, incluir el comando exacto o el snippet de código
-4. **Sin ambigüedad**: "Usa `model_dump_json()`, no `model_dump()`" — no "Prefiere serialización JSON"
+| Event | Action in CLAUDE.md |
+|-------|---------------------|
+| Discover a new gotcha | Add to `## Gotchas` with description and mitigation |
+| An error repeats 2+ times | Add to `## Gotchas > Critical` |
+| Claude generates code that violates a pattern | Add to `## Patterns > Anti-patterns` |
+| A business rule changes | Update `## Domain > Business rules` |
+| A new dependency is added to the stack | Update `## Architecture > Stack` |
+| Build/test/deploy commands change | Update `## Commands` |
 
-### Peso del contenido
+### At end of each session
 
-Claude da peso al CLAUDE.md, pero también lee el código. Para evitar conflictos:
+- Review if any gotcha discovered during the session is missing from CLAUDE.md
+- If a new pattern was established (used in 2+ places), document it
+- If a quality gate changed, update it
+- Session-review automatically logs corrections to `.claude/corrections.log` — no manual action needed
 
-- Si el CLAUDE.md contradice el código actual, **el código gana** — actualiza el CLAUDE.md
-- Si una spec .md contradice el código, **el código gana** — marca la spec como desactualizada
-- Las secciones más arriba en el archivo tienen más peso implícito — pon lo crítico primero
+### Post-mortem (when something goes wrong)
 
-### Tamaño óptimo
+When a significant error occurs (time lost > 30 min, bug in prod, severe merge conflict):
 
-- **Target**: 200-400 líneas. Suficiente para cubrir lo importante, no tanto que se diluya.
-- **Zona de peligro**: >600 líneas. Claude empieza a perder detalles. Mover contenido extenso a archivos referenciados.
-- **Principio de Latent Patterns**: La "zona inteligente" del contexto está al ~40% de utilización. No satures el CLAUDE.md con información que Claude puede descubrir leyendo el código.
-
----
-
-## Qué NO poner en el CLAUDE.md
-
-- **Documentación de API** — Claude la lee del código
-- **Historial de cambios** — eso es git log
-- **Tutoriales** — el CLAUDE.md es para un agente, no para onboarding de humanos
-- **Specs completas** — referencia al archivo, no copies el contenido
-- **Código extenso** — pon la ruta al archivo canónico, no el snippet
+1. **Identify the root cause**: Why did Claude do what it did?
+2. **Was information missing from CLAUDE.md?**: If yes, add it
+3. **Did Claude ignore existing information?**: If yes, rewrite the section to be more direct
+4. **Is it a recurring pattern?**: If yes, add to Anti-patterns with an example
 
 ---
 
-## Checklist de salud mensual
+## Writing for Claude
 
-Cada mes, revisa el CLAUDE.md con estas preguntas:
+### Writing rules
 
-- [ ] ¿Todas las gotchas siguen siendo relevantes? (eliminar las obsoletas)
-- [ ] ¿Los comandos funcionan? (ejecutarlos y verificar)
-- [ ] ¿Los patrones reflejan el código actual? (comparar con el repo)
-- [ ] ¿Hay gotchas nuevas que descubriste y no documentaste?
-- [ ] ¿El stack cambió? (nuevas dependencias, versiones)
-- [ ] ¿El tamaño está en la zona óptima? (200-400 líneas)
+1. **Direct imperative**: "Always rebuild containers after changing Python code" — not "It's recommended to rebuild..."
+2. **Explicit consequence**: "If you don't do X, Y will happen" — Claude responds better when it understands the impact
+3. **Concrete example**: When possible, include the exact command or code snippet
+4. **No ambiguity**: "Use `model_dump_json()`, not `model_dump()`" — not "Prefer JSON serialization"
+
+### Content weight
+
+Claude gives weight to CLAUDE.md, but also reads the code. To avoid conflicts:
+
+- If CLAUDE.md contradicts the current code, **the code wins** — update the CLAUDE.md
+- If a .md spec contradicts the code, **the code wins** — mark the spec as outdated
+- Sections higher in the file carry more implicit weight — put critical stuff first
+
+### Optimal size
+
+- **Target**: 200-400 lines. Enough to cover what matters, not so much that it gets diluted.
+- **Danger zone**: >600 lines. Claude starts losing details. Move extensive content to referenced files.
+- **Latent Patterns principle**: The "smart zone" of context is at ~40% utilization. Don't saturate CLAUDE.md with information Claude can discover by reading the code.
+
+---
+
+## What NOT to put in CLAUDE.md
+
+- **API documentation** — Claude reads it from the code
+- **Change history** — that's git log
+- **Tutorials** — CLAUDE.md is for an agent, not for human onboarding
+- **Complete specs** — reference the file, don't copy the content
+- **Extensive code** — put the path to the canonical file, not the snippet
+
+---
+
+## Monthly health checklist
+
+Every month, review the CLAUDE.md with these questions:
+
+- [ ] Are all gotchas still relevant? (remove obsolete ones)
+- [ ] Do the commands work? (run them and verify)
+- [ ] Do the patterns reflect the current code? (compare with the repo)
+- [ ] Are there new gotchas you discovered but didn't document?
+- [ ] Did the stack change? (new dependencies, versions)
+- [ ] Is the size in the optimal zone? (200-400 lines)
+- [ ] Review `.claude/corrections.log` — are promoted entries reflected in CLAUDE.md? Are there stale active entries that should be manually promoted or discarded?

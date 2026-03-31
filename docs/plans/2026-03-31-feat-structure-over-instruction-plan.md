@@ -239,12 +239,12 @@ Reference `corrections.log` in:
 - [x] Documented in `common-layer.md`
 
 ### Phase 3: Knowledge Graduation
-- [ ] Session-review writes corrections to `.claude/corrections.log` (TSV format)
-- [ ] Session-review reads log and detects repeated patterns (N>=3)
-- [ ] Auto-promoted corrections appear in correct CLAUDE.md section (or rules file)
-- [ ] Promoted entries marked in log to prevent re-promotion
-- [ ] Universal corrections also go to upstream proposals
-- [ ] `corrections.log` is committed (not gitignored)
+- [x] Session-review writes corrections to `.claude/corrections.log` (TSV format)
+- [x] Session-review reads log and detects repeated patterns (N>=3)
+- [x] Auto-promoted corrections appear in correct CLAUDE.md section (or rules file)
+- [x] Promoted entries marked in log to prevent re-promotion
+- [x] Universal corrections also go to upstream proposals
+- [x] `corrections.log` is committed (not gitignored — no .gitignore entry needed)
 
 ### Post-implementation: README.md
 - [ ] `README.md` updated to reflect new capabilities (path-scoped rules, test evaluation hook, knowledge graduation)
