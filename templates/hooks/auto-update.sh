@@ -18,7 +18,7 @@ notify() { echo "$1"; echo "$1" >&2; }
 # ─── Pending session review from previous session ────────────────────────────
 REVIEW_MARKER="$CLAUDE_PROJECT_DIR/.claude/.pending-session-review"
 if [ -f "$REVIEW_MARKER" ]; then
-    notify "SESSION_REVIEW_PENDING: La sesión anterior tuvo cambios significativos que no fueron revisados. Ejecuta /session-review para analizar si hay gotchas o patrones que añadir al CLAUDE.md."
+    notify "SESSION_REVIEW_PENDING: The previous session had significant changes that were not reviewed. Run /session-review to check for gotchas or patterns to add to CLAUDE.md."
     rm -f "$REVIEW_MARKER"
 fi
 
@@ -52,9 +52,12 @@ fi
 SYNC_SCRIPT=$(curl -sfL --max-time 10 "$GITHUB_RAW/bin/sync.sh" 2>/dev/null || echo "")
 
 if [ -z "$SYNC_SCRIPT" ]; then
-    notify "FRAMEWORK_UPDATE: nueva versión disponible ($LOCAL_VERSION → $REMOTE_VERSION) pero no se pudo descargar el sync. Se reintentará en la próxima sesión."
+    notify "FRAMEWORK_UPDATE: new version available ($LOCAL_VERSION → $REMOTE_VERSION) but failed to download sync script. Will retry next session."
     exit 0
 fi
 
-# Run sync in remote mode against this project
-bash <(echo "$SYNC_SCRIPT") "$CLAUDE_PROJECT_DIR" --remote
+# Run sync in remote mode against this project (temp-file approach for Windows Git Bash compatibility)
+TMPFILE=$(mktemp)
+echo "$SYNC_SCRIPT" > "$TMPFILE"
+bash "$TMPFILE" "$CLAUDE_PROJECT_DIR" --remote
+rm -f "$TMPFILE"

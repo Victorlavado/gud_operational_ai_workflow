@@ -38,8 +38,9 @@ TOOL_NAME="${1:-unknown}"
 # Extract session_id from PostToolUse JSON stdin (unique per Claude Code session)
 SESSION_ID=""
 INPUT=$(cat 2>/dev/null)
-if [ -n "$INPUT" ] && command -v python3 &>/dev/null; then
-    SESSION_ID=$(echo "$INPUT" | python3 -c "import sys,json;print(json.load(sys.stdin).get('session_id',''),end='')" 2>/dev/null)
+PYTHON=$(command -v python3 2>/dev/null || command -v python 2>/dev/null || echo "")
+if [ -n "$INPUT" ] && [ -n "$PYTHON" ]; then
+    SESSION_ID=$(echo "$INPUT" | "$PYTHON" -c "import sys,json;print(json.load(sys.stdin).get('session_id',''),end='')" 2>/dev/null)
 fi
 
 # Session ID fallback
@@ -75,13 +76,13 @@ LAST_ALERT=$(cat "$ALERT_STATE" 2>/dev/null || echo "none")
 
 # Check thresholds — each fires once, escalating
 if [ "$PCT" -ge 80 ] && [ "$LAST_ALERT" != "red" ]; then
-    alert "CONTEXT_WATCHDOG [RED]: ${PCT}% del contexto consumido. Cerca del auto-compaction (83.5%). La compactación automática puede eliminar contexto crítico. RECOMENDACIÓN: /clear y empezar sesión fresca. Antes de /clear: documenta el estado actual (qué se hizo, qué queda, decisiones tomadas)."
+    alert "CONTEXT_WATCHDOG [RED]: ${PCT}% context consumed. Near auto-compaction (83.5%). Automatic compaction may remove critical context. RECOMMENDATION: /clear and start a fresh session. Before /clear: document current state (what was done, what remains, decisions made)."
     echo "red" > "$ALERT_STATE" 2>/dev/null
 elif [ "$PCT" -ge 65 ] && [ "$LAST_ALERT" != "orange" ] && [ "$LAST_ALERT" != "red" ]; then
-    alert "CONTEXT_WATCHDOG [ORANGE]: ${PCT}% del contexto consumido. Más allá de la zona efectiva del modelo. Señales a vigilar: olvido de decisiones previas, errores repetidos, ignorar CLAUDE.md. Recomendación: /compact con instrucciones de qué preservar."
+    alert "CONTEXT_WATCHDOG [ORANGE]: ${PCT}% context consumed. Beyond the model's effective zone. Watch for: forgetting prior decisions, repeated errors, ignoring CLAUDE.md. Recommendation: /compact with instructions on what to preserve."
     echo "orange" > "$ALERT_STATE" 2>/dev/null
 elif [ "$PCT" -ge 40 ] && [ "$LAST_ALERT" != "yellow" ] && [ "$LAST_ALERT" != "orange" ] && [ "$LAST_ALERT" != "red" ]; then
-    alert "CONTEXT_WATCHDOG [YELLOW]: ${PCT}% del contexto consumido. Te acercas al límite de la zona efectiva. Si la tarea actual es compleja, considera /compact. No empieces tareas nuevas — mantén el foco en la línea actual."
+    alert "CONTEXT_WATCHDOG [YELLOW]: ${PCT}% context consumed. Approaching the effective zone boundary. If the current task is complex, consider /compact. Do not start new tasks — stay focused on the current one."
     echo "yellow" > "$ALERT_STATE" 2>/dev/null
 fi
 

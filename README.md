@@ -13,15 +13,29 @@ Layer 1: Project Intelligence     — CLAUDE.md as the project's brain  <-- impl
 
 ## Installation
 
-### First time
+### First time (macOS / Linux)
 
 ```bash
-# From any machine with the repo cloned:
 git clone https://github.com/Victorlavado/gud_operational_ai_workflow.git
 cd gud_operational_ai_workflow
 
 # Install into a project:
 ./install.sh ~/dev/my-project
+```
+
+### First time (Windows)
+
+Requires [Git for Windows](https://gitforwindows.org/) (provides bash).
+
+```cmd
+git clone https://github.com/Victorlavado/gud_operational_ai_workflow.git
+cd gud_operational_ai_workflow
+
+REM From CMD or PowerShell:
+install.bat C:\path\to\my-project
+
+REM Or from Git Bash:
+bash install.sh /c/path/to/my-project
 ```
 
 This installs hooks, skills, commands, and configuration. Then open Claude Code in the project and run `/init-project` to generate the CLAUDE.md.
@@ -49,11 +63,14 @@ No manual intervention. Works on any machine with internet access.
 If you prefer explicit control or don't have internet:
 
 ```bash
-# From the framework repo (local):
+# From the framework repo (macOS/Linux):
 ./bin/sync.sh ~/dev/my-project
 
-# Or directly with the install script:
-./install.sh ~/dev/my-project
+# From the framework repo (Windows CMD/PowerShell):
+install.bat C:\path\to\my-project
+
+# From Git Bash on any platform:
+bash install.sh /path/to/my-project
 ```
 
 ### What gets synced

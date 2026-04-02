@@ -1,0 +1,10 @@
+# Enforce LF line endings for shell scripts (CRLF breaks bash on Windows)
+*.sh text eol=lf
+
+# Enforce CRLF for Windows batch files
+*.bat text eol=crlf
+
+# Auto-detect for other text files
+*.md text auto
+*.json text auto
+*.py text auto

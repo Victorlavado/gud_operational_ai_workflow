@@ -30,9 +30,10 @@ fi
 INPUT=$(cat 2>/dev/null) || exit 0
 if [ -z "$INPUT" ]; then exit 0; fi
 
-command -v python3 &>/dev/null || exit 0
+PYTHON=$(command -v python3 2>/dev/null || command -v python 2>/dev/null || echo "")
+[ -z "$PYTHON" ] && exit 0
 
-PARSED=$(echo "$INPUT" | python3 -c "
+PARSED=$(echo "$INPUT" | "$PYTHON" -c "
 import sys, json
 try:
     d = json.load(sys.stdin)
@@ -107,7 +108,7 @@ done <<< "$MODIFIED_FILES"
 
 # ─── EMIT WARNING ─────────────────────────────────────────────────────────
 if [ "$HAS_TEST_MODS" = true ] && [ "$HAS_IMPL_MODS" = true ]; then
-    MSG="TEST_EVAL_WARNING: Tests existentes modificados junto con implementación (${TEST_FILES}). ¿Es un cambio de comportamiento intencional? Si no, los tests existentes podrían haberse debilitado para pasar."
+    MSG="TEST_EVAL_WARNING: Existing tests modified alongside implementation (${TEST_FILES}). Is this an intentional behavior change? If not, existing tests may have been weakened to pass."
 
     # Write to status line alert file
     if [ -n "$SESSION_ID" ]; then
