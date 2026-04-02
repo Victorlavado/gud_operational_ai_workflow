@@ -19,8 +19,11 @@
 
 input=$(cat)
 
-# Parse session state in a single python3 call (RS-delimited for safety)
-PARSED=$(echo "$input" | python3 -c "
+# Parse session state in a single python call (RS-delimited for safety)
+PYTHON=$(command -v python3 2>/dev/null || command -v python 2>/dev/null || echo "")
+[ -z "$PYTHON" ] && exit 0
+
+PARSED=$(echo "$input" | "$PYTHON" -c "
 import sys, json
 try:
     d = json.load(sys.stdin)

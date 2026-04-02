@@ -38,8 +38,9 @@ TOOL_NAME="${1:-unknown}"
 # Extract session_id from PostToolUse JSON stdin (unique per Claude Code session)
 SESSION_ID=""
 INPUT=$(cat 2>/dev/null)
-if [ -n "$INPUT" ] && command -v python3 &>/dev/null; then
-    SESSION_ID=$(echo "$INPUT" | python3 -c "import sys,json;print(json.load(sys.stdin).get('session_id',''),end='')" 2>/dev/null)
+PYTHON=$(command -v python3 2>/dev/null || command -v python 2>/dev/null || echo "")
+if [ -n "$INPUT" ] && [ -n "$PYTHON" ]; then
+    SESSION_ID=$(echo "$INPUT" | "$PYTHON" -c "import sys,json;print(json.load(sys.stdin).get('session_id',''),end='')" 2>/dev/null)
 fi
 
 # Session ID fallback

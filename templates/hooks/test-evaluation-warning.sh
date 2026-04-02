@@ -30,9 +30,10 @@ fi
 INPUT=$(cat 2>/dev/null) || exit 0
 if [ -z "$INPUT" ]; then exit 0; fi
 
-command -v python3 &>/dev/null || exit 0
+PYTHON=$(command -v python3 2>/dev/null || command -v python 2>/dev/null || echo "")
+[ -z "$PYTHON" ] && exit 0
 
-PARSED=$(echo "$INPUT" | python3 -c "
+PARSED=$(echo "$INPUT" | "$PYTHON" -c "
 import sys, json
 try:
     d = json.load(sys.stdin)

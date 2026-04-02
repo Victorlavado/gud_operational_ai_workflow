@@ -56,5 +56,8 @@ if [ -z "$SYNC_SCRIPT" ]; then
     exit 0
 fi
 
-# Run sync in remote mode against this project
-bash <(echo "$SYNC_SCRIPT") "$CLAUDE_PROJECT_DIR" --remote
+# Run sync in remote mode against this project (temp-file approach for Windows Git Bash compatibility)
+TMPFILE=$(mktemp)
+echo "$SYNC_SCRIPT" > "$TMPFILE"
+bash "$TMPFILE" "$CLAUDE_PROJECT_DIR" --remote
+rm -f "$TMPFILE"

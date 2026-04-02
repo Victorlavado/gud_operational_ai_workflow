@@ -115,10 +115,11 @@ if [ -n "$TEMPLATE_SETTINGS" ]; then
     if [ ! -f "$TARGET_DIR/.claude/settings.json" ]; then
         printf '%s\n' "$TEMPLATE_SETTINGS" > "$TARGET_DIR/.claude/settings.json"
         log_change "settings.json (creado)"
-    elif command -v python3 &>/dev/null; then
+    elif command -v python3 &>/dev/null || command -v python &>/dev/null; then
+        PYTHON=$(command -v python3 2>/dev/null || command -v python 2>/dev/null)
         EXISTING=$(cat "$TARGET_DIR/.claude/settings.json")
         # Overwrite hooks section from template, preserve everything else
-        MERGED=$(python3 -c "
+        MERGED=$("$PYTHON" -c "
 import json, sys
 existing = json.loads(sys.argv[1])
 template = json.loads(sys.argv[2])
@@ -131,7 +132,7 @@ print(json.dumps(existing, indent=2))
             log_change "settings.json (hooks actualizados)"
         fi
     else
-        # Sin python3: backup + overwrite (hooks section is framework-managed)
+        # Sin python: backup + overwrite (hooks section is framework-managed)
         EXISTING=$(cat "$TARGET_DIR/.claude/settings.json")
         if [ "$EXISTING" != "$TEMPLATE_SETTINGS" ]; then
             cp "$TARGET_DIR/.claude/settings.json" "$TARGET_DIR/.claude/settings.json.bak"

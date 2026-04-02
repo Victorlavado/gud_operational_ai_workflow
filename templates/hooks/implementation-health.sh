@@ -32,12 +32,13 @@ alert() {
 INPUT=$(cat 2>/dev/null) || exit 0
 if [ -z "$INPUT" ]; then exit 0; fi
 
-# Require python3 for JSON parsing (replaces jq dependency)
-command -v python3 &>/dev/null || exit 0
+# Require python3/python for JSON parsing (replaces jq dependency)
+PYTHON=$(command -v python3 2>/dev/null || command -v python 2>/dev/null || echo "")
+[ -z "$PYTHON" ] && exit 0
 
-# Parse all needed fields in a single python3 call (RS-delimited to handle multiline values)
+# Parse all needed fields in a single python call (RS-delimited to handle multiline values)
 # Uses ASCII Record Separator (0x1E) as delimiter — safe with any text content
-PARSED=$(echo "$INPUT" | python3 -c "
+PARSED=$(echo "$INPUT" | "$PYTHON" -c "
 import sys, json
 try:
     d = json.load(sys.stdin)

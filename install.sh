@@ -22,10 +22,13 @@ echo "Framework: $FRAMEWORK_DIR"
 echo "Target:    $TARGET_DIR"
 echo ""
 
-# Check python3 dependency
-if ! command -v python3 &>/dev/null; then
-    echo "AVISO: python3 no está instalado. El hook implementation-health requiere python3."
-    echo "Instala con: sudo apt-get install python3 (Debian/Ubuntu) o brew install python3 (macOS)"
+# Check python dependency
+if ! command -v python3 &>/dev/null && ! command -v python &>/dev/null; then
+    echo "AVISO: python no está instalado. El hook implementation-health requiere python 3."
+    echo "Instala con:"
+    echo "  - Windows:      winget install Python.Python.3  (o descarga de https://www.python.org)"
+    echo "  - Debian/Ubuntu: sudo apt-get install python3"
+    echo "  - macOS:         brew install python3"
     echo ""
 fi
 
