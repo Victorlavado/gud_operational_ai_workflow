@@ -32,14 +32,14 @@ fi
 
 # Resolve absolute path
 TARGET_DIR="$(cd "$TARGET_DIR" 2>/dev/null && pwd)" || {
-    echo "ERROR: directorio '$1' no existe."
+    echo "ERROR: directory '$1' does not exist."
     exit 1
 }
 
 if [ "$MODE" = "local" ]; then
     FRAMEWORK_DIR="$(cd "$(dirname "$0")/.." && pwd)"
     if [ ! -f "$FRAMEWORK_DIR/templates/common-layer.md" ]; then
-        echo "ERROR: framework no encontrado en $FRAMEWORK_DIR"
+        echo "ERROR: framework not found at $FRAMEWORK_DIR"
         exit 1
     fi
 fi
@@ -114,7 +114,7 @@ TEMPLATE_SETTINGS=$(fetch_content "templates/hooks/settings.json.template")
 if [ -n "$TEMPLATE_SETTINGS" ]; then
     if [ ! -f "$TARGET_DIR/.claude/settings.json" ]; then
         printf '%s\n' "$TEMPLATE_SETTINGS" > "$TARGET_DIR/.claude/settings.json"
-        log_change "settings.json (creado)"
+        log_change "settings.json (created)"
     elif command -v python3 &>/dev/null || command -v python &>/dev/null; then
         PYTHON=$(command -v python3 2>/dev/null || command -v python 2>/dev/null)
         EXISTING=$(cat "$TARGET_DIR/.claude/settings.json")
@@ -129,7 +129,7 @@ print(json.dumps(existing, indent=2))
 
         if [ -n "$MERGED" ] && [ "$MERGED" != "$EXISTING" ]; then
             printf '%s\n' "$MERGED" > "$TARGET_DIR/.claude/settings.json"
-            log_change "settings.json (hooks actualizados)"
+            log_change "settings.json (hooks updated)"
         fi
     else
         # Sin python: backup + overwrite (hooks section is framework-managed)
@@ -137,7 +137,7 @@ print(json.dumps(existing, indent=2))
         if [ "$EXISTING" != "$TEMPLATE_SETTINGS" ]; then
             cp "$TARGET_DIR/.claude/settings.json" "$TARGET_DIR/.claude/settings.json.bak"
             printf '%s\n' "$TEMPLATE_SETTINGS" > "$TARGET_DIR/.claude/settings.json"
-            log_change "settings.json (actualizado, backup en settings.json.bak)"
+            log_change "settings.json (updated, backup at settings.json.bak)"
         fi
     fi
 fi
@@ -160,7 +160,7 @@ if [ -f "$TARGET_DIR/CLAUDE.md" ] && grep -q "<!-- COMMON LAYER START -->" "$TAR
 
         if ! diff -q "$TARGET_DIR/CLAUDE.md" "$TARGET_DIR/CLAUDE.md.tmp" >/dev/null 2>&1; then
             mv "$TARGET_DIR/CLAUDE.md.tmp" "$TARGET_DIR/CLAUDE.md"
-            log_change "CLAUDE.md (Common Layer actualizado)"
+            log_change "CLAUDE.md (Common Layer updated)"
         else
             rm -f "$TARGET_DIR/CLAUDE.md.tmp"
         fi
@@ -172,7 +172,7 @@ if [ -f "$TARGET_DIR/.gitignore" ]; then
     for entry in ".claude/.framework-version" ".claude/.last-framework-check" ".claude/.pending-session-review" ".claude/.upstream-proposals"; do
         if ! grep -qF "$entry" "$TARGET_DIR/.gitignore" 2>/dev/null; then
             echo "$entry" >> "$TARGET_DIR/.gitignore"
-            log_change ".gitignore (añadido $entry)"
+            log_change ".gitignore (added $entry)"
         fi
     done
 fi
@@ -185,7 +185,7 @@ fi
 
 # 9. Report
 if [ -n "$CHANGES" ]; then
-    printf "FRAMEWORK_SYNC: actualizado.\n${CHANGES}"
+    printf "FRAMEWORK_SYNC: updated.\n${CHANGES}"
 else
-    echo "FRAMEWORK_SYNC: todo al día, sin cambios."
+    echo "FRAMEWORK_SYNC: up to date, no changes."
 fi

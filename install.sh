@@ -13,7 +13,7 @@ set -e
 FRAMEWORK_DIR="$(cd "$(dirname "$0")" && pwd)"
 TARGET_DIR="${1:-.}"
 TARGET_DIR="$(cd "$TARGET_DIR" 2>/dev/null && pwd)" || {
-    echo "ERROR: directorio '$1' no existe."
+    echo "ERROR: directory '$1' does not exist."
     exit 1
 }
 
@@ -24,9 +24,9 @@ echo ""
 
 # Check python dependency
 if ! command -v python3 &>/dev/null && ! command -v python &>/dev/null; then
-    echo "AVISO: python no está instalado. El hook implementation-health requiere python 3."
-    echo "Instala con:"
-    echo "  - Windows:      winget install Python.Python.3  (o descarga de https://www.python.org)"
+    echo "WARNING: python is not installed. The implementation-health hook requires Python 3."
+    echo "Install with:"
+    echo "  - Windows:       winget install Python.Python.3  (or download from https://www.python.org)"
     echo "  - Debian/Ubuntu: sudo apt-get install python3"
     echo "  - macOS:         brew install python3"
     echo ""
@@ -36,13 +36,13 @@ fi
 "$FRAMEWORK_DIR/bin/sync.sh" "$TARGET_DIR"
 
 echo ""
-echo "=== Instalación completa ==="
+echo "=== Installation complete ==="
 echo ""
-echo "Las actualizaciones futuras se aplican automáticamente al iniciar sesión de Claude Code."
-echo "(hook SessionStart comprueba GitHub cada hora, sincroniza si hay nueva versión)"
+echo "Future updates are applied automatically at the start of each Claude Code session."
+echo "(SessionStart hook checks GitHub hourly and syncs if a new version is available)"
 echo ""
-echo "Siguiente paso:"
-echo "  Abre Claude Code en $TARGET_DIR y ejecuta:"
-echo "    /init-project    — para generar el CLAUDE.md (Common + Project layers)"
-echo "    /bootstrap-intelligence  — para pre-rellenar con patrones del proyecto"
+echo "Next steps:"
+echo "  Open Claude Code in $TARGET_DIR and run:"
+echo "    /init-project    — to generate the CLAUDE.md (Common + Project layers)"
+echo "    /bootstrap-intelligence  — to pre-fill with project patterns"
 echo ""

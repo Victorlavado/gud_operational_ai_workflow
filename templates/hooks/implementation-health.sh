@@ -97,7 +97,7 @@ if [ "$TOOL_NAME" = "Edit" ] || [ "$TOOL_NAME" = "Write" ] || [ "$TOOL_NAME" = "
                     TESTS_RUN=$(wc -l < "$STATE_DIR/tests.log" | tr -d '[:space:]')
                 fi
                 if [ "$TESTS_RUN" -eq 0 ]; then
-                    alert "IMPLEMENTATION_HEALTH [NO_VALIDATION]: ${BASENAME} editado ${EDIT_COUNT} veces sin ejecutar tests. Muchos cambios sin validación."
+                    alert "IMPLEMENTATION_HEALTH [NO_VALIDATION]: ${BASENAME} edited ${EDIT_COUNT} times without running tests. Many changes without validation."
                     touch "$STATE_DIR/.churn_notest_${FILE_HASH}"
                 fi
             fi
@@ -116,7 +116,7 @@ if [ "$TOOL_NAME" = "Bash" ]; then
         CMD_COUNT=$(grep -c "^${CMD_HASH}$" "$STATE_DIR/bash.log" 2>/dev/null || echo "0")
         if [ "$CMD_COUNT" -ge 3 ] && [ ! -f "$STATE_DIR/.retry_${CMD_HASH}" ]; then
             SHORT_CMD=$(echo "$COMMAND" | tr '\n' ' ' | head -c 80)
-            alert "IMPLEMENTATION_HEALTH [RETRY_LOOP]: Mismo comando ejecutado ${CMD_COUNT} veces: '${SHORT_CMD}'. Si el resultado no cambia, el problema está en otro sitio."
+            alert "IMPLEMENTATION_HEALTH [RETRY_LOOP]: Same command executed ${CMD_COUNT} times: '${SHORT_CMD}'. If the result doesn't change, the problem is elsewhere."
             touch "$STATE_DIR/.retry_${CMD_HASH}"
         fi
 
@@ -145,7 +145,7 @@ if [ "$TOOL_NAME" = "Bash" ]; then
                 if [ "$TOTAL_RUNS" -ge 2 ]; then
                     LAST_TWO_FAILS=$(tail -2 "$STATE_DIR/tests.log" | grep -c "1" | tr -d '[:space:]')
                     if [ "$LAST_TWO_FAILS" -ge 2 ] && [ ! -f "$STATE_DIR/.test_regression" ]; then
-                        alert "IMPLEMENTATION_HEALTH [TEST_REGRESSION]: Tests fallando en las últimas ${LAST_TWO_FAILS} ejecuciones consecutivas. Los fixes no están resolviendo el problema."
+                        alert "IMPLEMENTATION_HEALTH [TEST_REGRESSION]: Tests failing for the last ${LAST_TWO_FAILS} consecutive runs. Fixes are not resolving the problem."
                         touch "$STATE_DIR/.test_regression"
                     fi
                 fi
@@ -154,7 +154,7 @@ if [ "$TOOL_NAME" = "Bash" ]; then
                 if [ "$TOTAL_RUNS" -ge 3 ]; then
                     LAST_THREE_FAILS=$(tail -3 "$STATE_DIR/tests.log" | grep -c "1" | tr -d '[:space:]')
                     if [ "$LAST_THREE_FAILS" -ge 3 ] && [ ! -f "$STATE_DIR/.test_spiral" ]; then
-                        alert "IMPLEMENTATION_HEALTH [SPIRAL]: 3 ejecuciones de tests consecutivas fallando. Espiral confirmada. Invoca /recovery para diagnóstico completo."
+                        alert "IMPLEMENTATION_HEALTH [SPIRAL]: 3 consecutive test runs failing. Spiral confirmed. Run /recovery for full diagnosis."
                         touch "$STATE_DIR/.test_spiral"
                     fi
                 fi
@@ -170,7 +170,7 @@ if [ -f "$STATE_DIR/edits.log" ] && [ -f "$STATE_DIR/tests.log" ]; then
     TOTAL_TEST_FAILS=$(grep -c "1" "$STATE_DIR/tests.log" 2>/dev/null || echo "0")
 
     if [ "$TOTAL_EDITS" -ge 6 ] && [ "$TOTAL_TEST_FAILS" -ge 3 ] && [ ! -f "$STATE_DIR/.composite_spiral" ]; then
-        alert "IMPLEMENTATION_HEALTH [FIX_TEST_SPIRAL]: ${TOTAL_EDITS} edits + ${TOTAL_TEST_FAILS} test failures. Patrón edit→test→fail confirmado. Invoca /recovery o haz /clear y replantea con scope reducido."
+        alert "IMPLEMENTATION_HEALTH [FIX_TEST_SPIRAL]: ${TOTAL_EDITS} edits + ${TOTAL_TEST_FAILS} test failures. Edit→test→fail pattern confirmed. Run /recovery or /clear and rethink with reduced scope."
         touch "$STATE_DIR/.composite_spiral"
     fi
 fi
