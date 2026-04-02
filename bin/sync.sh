@@ -103,7 +103,7 @@ for skill_dir in session-review recovery propose-upstream; do
 done
 
 # 4. Sync commands
-for cmd in context-check.md; do
+for cmd in context-check.md init-project.md bootstrap-intelligence.md process-inbox.md process-resource.md weekly-briefing.md; do
     sync_file ".claude/commands/$cmd" \
               "$TARGET_DIR/.claude/commands/$cmd" \
               "command: ${cmd%.md}"
